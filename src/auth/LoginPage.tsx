@@ -1,7 +1,7 @@
 // src/components/auth/LoginPage.tsx
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Shield, User } from 'lucide-react';
 
 export default function LoginPage({ onSwitch }: { onSwitch: () => void }) {
   const { login } = useApp();
@@ -9,6 +9,7 @@ export default function LoginPage({ onSwitch }: { onSwitch: () => void }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [mode, setMode] = useState<'admin' | 'member'>('member');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +17,7 @@ export default function LoginPage({ onSwitch }: { onSwitch: () => void }) {
       setError('Please fill in all fields');
       return;
     }
-    login(email, password);
+    login(email, password, mode);
   };
 
   return (
@@ -64,7 +65,41 @@ export default function LoginPage({ onSwitch }: { onSwitch: () => void }) {
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h2>
-          <p className="text-gray-500 mb-8">Sign in to manage your chama</p>
+          <p className="text-gray-500 mb-6">Sign in to your account</p>
+
+          {/* Portal Mode Selection */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => setMode('member')}
+              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                mode === 'member'
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <User className="w-5 h-5" />
+              <div className="text-left">
+                <p className="font-semibold text-sm">Member</p>
+                <p className="text-[10px] opacity-70">Personal portal</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('admin')}
+              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                mode === 'admin'
+                  ? 'border-primary-500 bg-primary-50 text-primary-700'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              <div className="text-left">
+                <p className="font-semibold text-sm">Admin</p>
+                <p className="text-[10px] opacity-70">Manage chama</p>
+              </div>
+            </button>
+          </div>
 
           {error && (
             <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-3 mb-6 text-sm">
@@ -112,8 +147,13 @@ export default function LoginPage({ onSwitch }: { onSwitch: () => void }) {
               <a href="#" className="text-sm text-primary-600 font-medium hover:text-primary-700">Forgot password?</a>
             </div>
 
-            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 py-3">
-              <LogIn className="w-5 h-5" /> Sign In
+            <button type="submit" className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-white transition-all shadow-lg active:scale-[0.98] ${
+              mode === 'member'
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-500/25'
+                : 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 shadow-primary-500/25'
+            }`}>
+              <LogIn className="w-5 h-5" />
+              Sign In as {mode === 'member' ? 'Member' : 'Admin'}
             </button>
           </form>
 
@@ -124,10 +164,10 @@ export default function LoginPage({ onSwitch }: { onSwitch: () => void }) {
             </button>
           </p>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-            <p className="text-xs text-gray-500 text-center">
-              💡 Demo: Enter any email and password to sign in
-            </p>
+          <div className="mt-6 p-4 bg-gray-50 rounded-xl space-y-1">
+            <p className="text-xs text-gray-500 text-center font-medium">💡 Demo Accounts</p>
+            <p className="text-xs text-gray-400 text-center">Admin: mary@email.com | Member: agnes@email.com</p>
+            <p className="text-xs text-gray-400 text-center">Any password works</p>
           </div>
         </div>
       </div>

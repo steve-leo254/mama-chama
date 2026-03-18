@@ -34,7 +34,7 @@ export default function RegisterPage({ onSwitch }: { onSwitch: () => void }) {
       nextOfKin: '',
       nationalId: '',
     });
-    login(form.email, form.password);
+    login(form.email, form.password, 'member');
   };
 
   return (

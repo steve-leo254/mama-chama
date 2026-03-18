@@ -12,6 +12,7 @@ export interface Member {
   status: 'active' | 'inactive' | 'suspended';
   nextOfKin: string;
   nationalId: string;
+  password?: string;
 }
 
 export interface Contribution {
@@ -42,16 +43,57 @@ export interface Loan {
   dueDate: string;
   status: 'pending' | 'approved' | 'active' | 'completed' | 'defaulted' | 'rejected';
   guarantors: string[];
-  duration: number; // months
+  duration: number;
 }
 
 export interface LoanRepaymentRecord {
   id: string;
   loanId: string;
+  memberId: string;
   amount: number;
   date: string;
   method: 'mpesa' | 'bank' | 'cash';
   reference: string;
+  balanceAfter: number;
+}
+
+export interface Fine {
+  id: string;
+  memberId: string;
+  memberName: string;
+  amount: number;
+  reason: string;
+  date: string;
+  status: 'paid' | 'unpaid';
+  paidDate?: string;
+  month: string;
+}
+
+export interface WithdrawRequest {
+  id: string;
+  memberId: string;
+  memberName: string;
+  amount: number;
+  reason: string;
+  date: string;
+  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  approvedBy?: string;
+  approvedDate?: string;
+  method: 'mpesa' | 'bank';
+  accountDetails: string;
+}
+
+export interface DepositRecord {
+  id: string;
+  memberId: string;
+  memberName: string;
+  amount: number;
+  date: string;
+  type: 'contribution' | 'loan_repayment' | 'fine_payment' | 'savings';
+  method: 'mpesa' | 'bank' | 'cash';
+  reference: string;
+  status: 'completed' | 'pending' | 'failed';
+  description: string;
 }
 
 export interface Meeting {
@@ -79,12 +121,14 @@ export interface MerryGoRoundCycle {
 
 export interface Transaction {
   id: string;
-  type: 'contribution' | 'loan_disbursement' | 'loan_repayment' | 'penalty' | 'interest' | 'merry_go_round';
+  type: 'contribution' | 'loan_disbursement' | 'loan_repayment' | 'penalty' | 'interest' | 'merry_go_round' | 'deposit' | 'withdrawal' | 'fine_payment';
   amount: number;
   date: string;
   description: string;
   memberId: string;
   memberName: string;
+  direction: 'in' | 'out';
+  balance?: number;
 }
 
 export interface ChamaStats {
@@ -96,6 +140,21 @@ export interface ChamaStats {
   monthlyTarget: number;
   monthlyCollected: number;
   nextMeeting: string;
+  totalFinesCollected: number;
+  totalSavings: number;
+}
+
+export interface MemberStats {
+  totalContributed: number;
+  totalFines: number;
+  finesPaid: number;
+  finesUnpaid: number;
+  activeLoanBalance: number;
+  totalLoansTaken: number;
+  savingsBalance: number;
+  contributionStreak: number;
+  lastContributionDate: string;
+  pendingWithdrawals: number;
 }
 
 export interface Notification {
@@ -105,4 +164,5 @@ export interface Notification {
   type: 'info' | 'warning' | 'success' | 'error';
   date: string;
   read: boolean;
+  memberId?: string;
 }
