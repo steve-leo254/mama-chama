@@ -44,11 +44,11 @@ export default function MemberCard({ member }: MemberCardProps) {
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-emerald-50 rounded-xl p-3">
           <p className="text-xs text-gray-500">Contributed</p>
-          <p className="text-sm font-bold text-emerald-700">KES {member.totalContributed.toLocaleString()}</p>
+          <p className="text-sm font-bold text-emerald-700">KES {(member.totalContributed || 0).toLocaleString()}</p>
         </div>
         <div className="bg-amber-50 rounded-xl p-3">
           <p className="text-xs text-gray-500">Borrowed</p>
-          <p className="text-sm font-bold text-amber-700">KES {member.totalBorrowed.toLocaleString()}</p>
+          <p className="text-sm font-bold text-amber-700">KES {(member.totalBorrowed || 0).toLocaleString()}</p>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export default function MemberCard({ member }: MemberCardProps) {
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-100">
-        <p className="text-xs text-gray-400">Joined {new Date(member.joinDate).toLocaleDateString('en', { month: 'long', year: 'numeric' })}</p>
+        <p className="text-xs text-gray-400">Joined {member.joinDate ? new Date(member.joinDate).toLocaleDateString('en', { month: 'long', year: 'numeric' }) : 'Unknown'}</p>
       </div>
     </div>
   );

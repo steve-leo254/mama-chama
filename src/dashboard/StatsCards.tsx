@@ -1,14 +1,23 @@
 // src/components/dashboard/StatsCards.tsx
 import { Users, PiggyBank, HandCoins, Wallet, TrendingUp } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext.tsx';
 
 export default function StatsCards() {
   const { stats } = useApp();
 
+  // Provide default values to prevent undefined errors
+  const safeStats = {
+    availableFunds: stats?.availableFunds || 0,
+    totalContributions: stats?.totalContributions || 0,
+    totalLoans: stats?.totalLoans || 0,
+    pendingLoanApplications: stats?.pendingLoanApplications || 0,
+    totalMembers: stats?.totalMembers || 0,
+  };
+
   const cards = [
     {
       label: 'Total Balance',
-      value: `KES ${stats.availableBalance.toLocaleString()}`,
+      value: `KES ${safeStats.availableFunds.toLocaleString()}`,
       icon: Wallet,
       change: '+12.5%',
       positive: true,
@@ -18,7 +27,7 @@ export default function StatsCards() {
     },
     {
       label: 'Total Contributions',
-      value: `KES ${stats.totalContributions.toLocaleString()}`,
+      value: `KES ${safeStats.totalContributions.toLocaleString()}`,
       icon: PiggyBank,
       change: '+8.2%',
       positive: true,
@@ -28,8 +37,8 @@ export default function StatsCards() {
     },
     {
       label: 'Active Loans',
-      value: stats.totalLoansActive.toString(),
-      subtitle: `KES ${stats.totalLoansAmount.toLocaleString()}`,
+      value: safeStats.totalLoans.toString(),
+      subtitle: `${safeStats.pendingLoanApplications} pending`,
       icon: HandCoins,
       change: '-2',
       positive: false,
@@ -39,7 +48,7 @@ export default function StatsCards() {
     },
     {
       label: 'Members',
-      value: stats.totalMembers.toString(),
+      value: safeStats.totalMembers.toString(),
       subtitle: 'Active members',
       icon: Users,
       change: '+1',

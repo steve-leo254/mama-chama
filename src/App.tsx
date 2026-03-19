@@ -1,7 +1,7 @@
 // src/App.tsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useState } from 'react';
-import { AppProvider, useApp } from './context/AppContext';
+import { AppProvider, useApp } from './context/AppContext.tsx';
 
 // Admin Layout & Pages
 import Layout from './layout/Layout';
@@ -26,17 +26,84 @@ import MemberProfilePage from './pages/member/MemberProfilePage';
 // Auth
 import LoginPage from './auth/LoginPage';
 import RegisterPage from './auth/RegisterPage';
+import ForgotPasswordPage from './auth/ForgotPasswordPage';
+import ResetPasswordPage from './auth/ResetPasswordPage';
+import TermsPage from './auth/TermsPage';
+import VerifyEmailPage from './auth/VerifyEmailPage';
+
+type AuthView = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'terms' | 'verify-email';
 
 function AppContent() {
   const { isAuthenticated, portalMode } = useApp();
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authView, setAuthView] = useState<AuthView>('login');
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [registrationState, setRegistrationState] = useState<{
+    step: number;
+    data: any;
+  } | null>(null);
 
   if (!isAuthenticated) {
-    return authMode === 'login' ? (
-      <LoginPage onSwitch={() => setAuthMode('register')} />
-    ) : (
-      <RegisterPage onSwitch={() => setAuthMode('login')} />
-    );
+    switch (authView) {
+      case 'login':
+        return (
+          <LoginPage
+            onSwitch={() => setAuthView('register')}
+            onForgotPassword={() => setAuthView('forgot-password')}
+          />
+        );
+
+      case 'register':
+        return (
+          <RegisterPage
+            onSwitch={() => {
+              setRegistrationState(null);
+              setAuthView('login');
+            }}
+            onViewTerms={(step: number, data: any) => {
+              setRegistrationState({ step, data });
+              setAuthView('terms');
+            }}
+            initialStep={registrationState?.step || 1}
+            initialData={registrationState?.data || null}
+          />
+        );
+
+      case 'forgot-password':
+        return (
+          <ForgotPasswordPage
+            onBack={() => setAuthView('login')}
+            onResetPassword={() => setAuthView('reset-password')}
+          />
+        );
+
+      case 'reset-password':
+        return (
+          <ResetPasswordPage
+            onBack={() => setAuthView('forgot-password')}
+            onSuccess={() => setAuthView('login')}
+          />
+        );
+
+      case 'terms':
+        return <TermsPage onBack={() => setAuthView('register')} />;
+
+      case 'verify-email':
+        return (
+          <VerifyEmailPage
+            email={pendingEmail || 'user@email.com'}
+            onVerified={() => setAuthView('login')}
+            onResend={() => console.log('Resend verification')}
+          />
+        );
+
+      default:
+        return (
+          <LoginPage
+            onSwitch={() => setAuthView('register')}
+            onForgotPassword={() => setAuthView('forgot-password')}
+          />
+        );
+    }
   }
 
   return (

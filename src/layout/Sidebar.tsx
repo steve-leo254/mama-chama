@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Wallet, HandCoins, CalendarDays,
   RefreshCw, Settings, LogOut, PiggyBank
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext.tsx';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,7 +18,14 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const { currentUser, logout } = useApp();
+  const { currentUser, logout, portalMode } = useApp();
+  
+  // Debug: Log current state
+  console.log('Sidebar Debug:', { 
+    currentUser: currentUser?.name, 
+    role: currentUser?.role, 
+    portalMode 
+  });
 
   return (
     <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-gray-100 h-screen sticky top-0">

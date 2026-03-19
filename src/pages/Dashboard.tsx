@@ -3,10 +3,10 @@ import StatsCards from '../dashboard/StatsCards';
 import ContributionChart from '../dashboard/ContributionChart';
 import RecentTransactions from '../dashboard/RecentTransactions';
 import UpcomingEvents from '../dashboard/UpcomingEvents';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext.tsx';
 
 export default function Dashboard() {
-  const { stats, currentUser } = useApp();
+  const { stats, currentUser, dataLoading } = useApp();
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -18,24 +18,27 @@ export default function Dashboard() {
           <p className="text-white/80 text-sm">Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},</p>
           <h1 className="text-2xl lg:text-3xl font-bold mt-1">{currentUser?.name || 'Welcome'} 👋</h1>
           <p className="text-white/70 mt-2 text-sm">Here's what's happening with your chama today</p>
-          
-          <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white/80">Monthly Collection Progress</span>
-              <span className="text-sm font-semibold">
-                {((stats.monthlyCollected / stats.monthlyTarget) * 100).toFixed(0)}%
-              </span>
+          {dataLoading ? (
+            <div className="text-white/80 text-sm mt-2">Loading your data...</div>
+          ) : currentUser ? (
+            <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-white/80">Monthly Collection Progress</span>
+                <span className="text-sm font-semibold">
+                  {((stats.monthlyCollected / stats.monthlyTarget) * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="w-full bg-white/20 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-white h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${(stats.monthlyCollected / stats.monthlyTarget) * 100}%` }}
+                />
+              </div>
+              <p className="text-xs text-white/60 mt-2">
+                KES {stats.monthlyCollected.toLocaleString()} of KES {stats.monthlyTarget.toLocaleString()} collected
+              </p>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-2.5 overflow-hidden">
-              <div
-                className="bg-white h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${(stats.monthlyCollected / stats.monthlyTarget) * 100}%` }}
-              />
-            </div>
-            <p className="text-xs text-white/60 mt-2">
-              KES {stats.monthlyCollected.toLocaleString()} of KES {stats.monthlyTarget.toLocaleString()} collected
-            </p>
-          </div>
+          ) : null}
         </div>
       </div>
 

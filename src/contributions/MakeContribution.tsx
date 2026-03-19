@@ -1,7 +1,7 @@
 // src/components/contributions/MakeContribution.tsx
 import { useState } from 'react';
 import Modal from '../ui/Modal';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext.tsx';
 import { CreditCard, Smartphone, Banknote } from 'lucide-react';
 
 interface MakeContributionProps {
@@ -14,18 +14,17 @@ export default function MakeContribution({ isOpen, onClose }: MakeContributionPr
   const [form, setForm] = useState({
     memberId: '',
     amount: '',
-    type: 'monthly' as 'monthly' | 'special' | 'penalty' | 'merry-go-round',
+    type: 'monthly' as 'monthly' | 'special' | 'penalty' | 'merry_go_round',
     method: 'mpesa' as 'mpesa' | 'bank' | 'cash',
     reference: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const member = members.find(m => m.id === form.memberId);
+    const member = members.find((m: any) => m.id === form.memberId);
     if (!member) return;
     addContribution({
-      memberId: form.memberId,
-      memberName: member.name,
+      member_id: form.memberId,
       amount: Number(form.amount),
       date: new Date().toISOString().split('T')[0],
       month: new Date().toLocaleDateString('en', { month: 'long', year: 'numeric' }),
@@ -56,7 +55,7 @@ export default function MakeContribution({ isOpen, onClose }: MakeContributionPr
             className="input-field"
           >
             <option value="">Select member</option>
-            {members.filter(m => m.status === 'active').map(m => (
+            {members.filter((m: any) => m.status === 'active').map((m: any) => (
               <option key={m.id} value={m.id}>{m.name}</option>
             ))}
           </select>
@@ -85,7 +84,7 @@ export default function MakeContribution({ isOpen, onClose }: MakeContributionPr
             <option value="monthly">Monthly</option>
             <option value="special">Special</option>
             <option value="penalty">Penalty</option>
-            <option value="merry-go-round">Merry-Go-Round</option>
+            <option value="merry_go_round">Merry-Go-Round</option>
           </select>
         </div>
 
