@@ -11,7 +11,7 @@ interface DepositModalProps {
 }
 
 export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
-  const { currentUser, addDeposit } = useApp();
+  const { currentUser, addDeposit, refreshData } = useApp();
   const [showMpesa, setShowMpesa] = useState(false);
   const [selectedType, setSelectedType] = useState<PaymentType>('contribution');
   const [selectedAmount, setSelectedAmount] = useState(5000);
@@ -30,9 +30,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     setStep('method');
   };
 
-  const handleMpesaSuccess = (result: any) => {
+  const handleMpesaSuccess = async (result: any) => {
     if (currentUser) {
-      addDeposit({
+      await addDeposit({
         memberId: currentUser.id,
         memberName: currentUser.name,
         amount: result.amount,
@@ -43,6 +43,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
         status: 'completed',
         description: `M-Pesa ${selectedType.replace('_', ' ')} - ${result.receiptNumber}`,
       });
+      await refreshData();
     }
     setShowMpesa(false);
     handleClose();

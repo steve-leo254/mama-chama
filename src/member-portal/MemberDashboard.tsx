@@ -1,10 +1,9 @@
 // src/components/member-portal/MemberDashboard.tsx
 import { useApp } from '../context/AppContext.tsx';
-import { PiggyBank, HandCoins, AlertTriangle, TrendingUp, Calendar, ArrowDownLeft, ArrowUpRight, Wallet, Award, Key } from 'lucide-react';
+import { PiggyBank, HandCoins, AlertTriangle, TrendingUp, Calendar, ArrowDownLeft, ArrowUpRight, Wallet, Award } from 'lucide-react';
 import Badge from '../ui/Badge';
 import ProgressBar from '../ui/ProgressBar';
 import { useState, useEffect } from 'react';
-import { toast } from '../components/ui/Toast';
 
 export default function MemberDashboard() {
   const { currentUser, getMemberStats, getMemberTransactions, getMemberLoans, getMemberFines, meetings } = useApp();
@@ -61,19 +60,6 @@ export default function MemberDashboard() {
               <Award className="w-5 h-5 text-amber-300" />
               <span className="text-sm font-medium">{stats.contributionStreak || 0} month streak</span>
             </div>
-            <button
-              onClick={() => {
-                const newPassword = Math.random().toString(36).substring(2, 10);
-                toast.info('Password Changed', `Your new password is: ${newPassword}`);
-                
-                // In a real implementation, you would update the password in backend
-                // await membersAPI.updatePassword(currentUser.id, newPassword);
-              }}
-              className="ml-4 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 flex items-center gap-2"
-            >
-              <Key className="w-4 h-4" />
-              Change Password
-            </button>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">

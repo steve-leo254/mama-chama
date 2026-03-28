@@ -91,6 +91,7 @@ interface AppContextType {
   addLoanRepayment: (repayment: any) => Promise<void>;
   addMeeting: (meeting: any) => Promise<void>;
   markNotificationRead: (id: string) => void;
+  clearAllNotifications: () => void;
   unreadNotifications: number;
   addDeposit: (deposit: any) => Promise<void>;
   addWithdrawRequest: (request: any) => Promise<void>;
@@ -354,11 +355,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const createMissingTransactions = async () => {
     console.log('Creating missing transactions for existing deposits');
     
+    // First refresh data to get latest transactions
+    await refreshData();
+    
     for (const deposit of data.deposits) {
+      // Check if there's already a transaction for this deposit
       const hasTransaction = data.transactions.some((tx: any) => 
-        tx.member_id === deposit.member_id && 
-        tx.amount === deposit.amount && 
-        tx.date === deposit.date
+        tx.reference_id === deposit.id || 
+        (tx.member_id === deposit.member_id && 
+         tx.amount === deposit.amount && 
+         tx.date === deposit.date &&
+         tx.description === deposit.description)
       );
       
       if (!hasTransaction) {
@@ -371,6 +378,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           member_id: deposit.member_id,
           member_name: deposit.member_name,
           direction: 'in' as const,
+          reference_id: deposit.id, // Link to the deposit
         };
         
         try {
@@ -384,8 +392,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           console.error('Failed to save transaction to database:', error);
         }
+      } else {
+        console.log('Transaction already exists for deposit:', deposit.id);
       }
     }
+    
+    // Final refresh to get all data
+    await refreshData();
   };
 
   const addWithdrawRequest = async (request: any) => {
@@ -427,35 +440,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clearAllNotifications = async () => {
+    try {
+      await notificationsAPI.markAllRead();
+      updateData({
+        notifications: data.notifications.map(n => ({ ...n, read: true }))
+      });
+    } catch (err) {
+      console.error('Failed to clear all notifications:', err);
+    }
+  };
+
   const getMemberStats = async (memberId: string): Promise<MemberStats> => {
     try {
-      return await membersAPI.getStats(memberId);
+      const response = await membersAPI.getStats(memberId);
+      console.log('📊 Member stats from API:', response);
+      return response;
     } catch (err) {
-      // Fallback to calculated stats
-      const memberContribs = data.contributions.filter(c => c.member_id === memberId);
-      const memberFines = data.fines.filter(f => f.member_id === memberId);
-      const memberLoans = data.loans.filter(l => l.member_id === memberId);
-
-      const totalContributed = memberContribs
-        .filter(c => c.status === 'completed')
-        .reduce((sum, c) => sum + c.amount, 0);
-
-      const totalFines = memberFines.reduce((sum, f) => sum + f.amount, 0);
-      const finesPaid = memberFines.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0);
-      const finesUnpaid = memberFines.filter(f => f.status === 'unpaid').reduce((sum, f) => sum + f.amount, 0);
-
-      const activeLoans = memberLoans.filter(l => l.status === 'active');
-      const activeLoanBalance = activeLoans.reduce((sum, l) => sum + (l.total_repayable - l.amount_paid), 0);
-      const totalLoansTaken = memberLoans.length;
-
+      console.error('❌ Failed to load member stats from API:', err);
+      // Return empty stats on error
       return {
-        totalContributed,
-        totalFines,
-        finesPaid,
-        finesUnpaid,
-        activeLoanBalance,
-        totalLoansTaken,
-        savingsBalance: totalContributed,
+        totalContributed: 0,
+        totalFines: 0,
+        finesPaid: 0,
+        finesUnpaid: 0,
+        activeLoanBalance: 0,
+        totalLoansTaken: 0,
+        savingsBalance: 0,
         contributionStreak: 0,
         lastContributionDate: '',
         pendingWithdrawals: 0,
@@ -516,6 +527,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addLoanRepayment,
     addMeeting,
     markNotificationRead,
+    clearAllNotifications,
     unreadNotifications,
     addDeposit,
     addWithdrawRequest,

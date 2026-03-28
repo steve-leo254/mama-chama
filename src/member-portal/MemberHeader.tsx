@@ -1,10 +1,10 @@
 // src/components/member-portal/MemberHeader.tsx
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function MemberHeader() {
-  const { currentUser, getMemberNotifications, markNotificationRead } = useApp();
+  const { currentUser, getMemberNotifications, markNotificationRead, clearAllNotifications } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const myNotifications = currentUser ? getMemberNotifications(currentUser.id) : [];
@@ -43,8 +43,17 @@ export default function MemberHeader() {
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
                 <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-20 overflow-hidden animate-slide-up">
-                  <div className="p-4 border-b border-gray-100">
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">My Notifications</h3>
+                    {unread > 0 && (
+                      <button
+                        onClick={() => clearAllNotifications()}
+                        className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        Clear All
+                      </button>
+                    )}
                   </div>
                   <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
                     {myNotifications.map((notif) => (

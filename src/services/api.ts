@@ -216,6 +216,24 @@ export const merryGoRoundAPI = {
   delete: (id: string) => apiClient.delete<any>(`/merry-go-round/${id}`),
 };
 
+// M-Pesa API
+export const mpesaAPI = {
+  initiateStkPush: (data: any) => apiClient.post<any>('/mpesa/stk-push', data),
+  simulateStkCallback: (transactionId: string, success: boolean) => 
+    apiClient.post<any>(`/mpesa/stk-push/${transactionId}/simulate-callback?success=${success}`),
+  manualConfirm: (data: any) => apiClient.post<any>('/mpesa/manual-confirm', data),
+  getPaybillInfo: () => apiClient.get<any>('/mpesa/paybill-info'),
+  getTransactions: (memberId?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (memberId) params.append('member_id', memberId);
+    if (status && status !== 'all') params.append('status', status);
+    const queryString = params.toString();
+    return apiClient.get<any[]>(`/mpesa/transactions${queryString ? `?${queryString}` : ''}`);
+  },
+  getTransactionStatus: (transactionId: string) => apiClient.get<any>(`/mpesa/transactions/${transactionId}/status`),
+  approveTransaction: (transactionId: string) => apiClient.put<any>(`/mpesa/transactions/${transactionId}/approve`),
+};
+
 // Meetings API
 export const meetingsAPI = {
   list: (status?: string) => {

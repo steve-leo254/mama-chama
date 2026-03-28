@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Smartphone, Loader2, Phone, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { mpesaAPI } from '../services/api';
 import type { PaymentResult } from './MpesaPaymentModal';
 import type { PaymentType } from './MpesaPaymentModal';
 
@@ -49,50 +50,66 @@ export default function MpesaSTKPush({
   useEffect(() => {
     if (!isProcessing) return;
     
-    const messages = [
-      'Connecting to Safaricom',
-      'Sending STK Push to your phone',
-      'Waiting for you to enter PIN',
-      'Processing your payment',
-    ];
-    
-    let step = 0;
-    setStatusText(messages[0]);
-    setCountdown(30);
-    
-    const msgInterval = setInterval(() => {
-      step++;
-      if (step < messages.length) {
-        setStatusText(messages[step]);
+    const processPayment = async () => {
+      try {
+        // Initiate STK push with backend
+        const response = await mpesaAPI.initiateStkPush({
+          phone_number: phone,
+          amount,
+          payment_type: paymentType,
+          description: description || `${paymentType.replace('_', ' ')} payment`,
+        });
+        
+        console.log('STK Push initiated:', response);
+        
+        // Simulate callback after delay (in production, this would be handled by Safaricom webhook)
+        setTimeout(async () => {
+          try {
+            await mpesaAPI.simulateStkCallback(response.transaction_id, true);
+            
+            onComplete({
+              transactionId: response.transaction_id,
+              receiptNumber: `QK${Math.random().toString().slice(2, 9)}R`,
+              amount,
+              phone,
+              date: new Date().toISOString(),
+              paymentType,
+              status: 'completed',
+              description: description || `${paymentType.replace('_', ' ')} payment`,
+            });
+          } catch (error) {
+            console.error('Callback simulation failed:', error);
+            onComplete({
+              transactionId: response.transaction_id,
+              receiptNumber: '',
+              amount,
+              phone,
+              date: new Date().toISOString(),
+              paymentType,
+              status: 'failed',
+              description: 'Payment failed',
+            });
+          }
+          setProcessing(false);
+        }, 5000); // Simulate 5 second delay
+        
+      } catch (error) {
+        console.error('STK Push failed:', error);
+        setProcessing(false);
+        onComplete({
+          transactionId: `mpesa-${Date.now()}`,
+          receiptNumber: '',
+          amount,
+          phone,
+          date: new Date().toISOString(),
+          paymentType,
+          status: 'failed',
+          description: 'Failed to initiate payment',
+        });
       }
-    }, 5000);
-    
-    const countdownInterval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
-          // Simulate success
-          const receipt = `QK${Math.random().toString().slice(2, 9)}R`;
-          onComplete({
-            transactionId: `mpesa-${Date.now()}`,
-            receiptNumber: receipt,
-            amount,
-            phone,
-            date: new Date().toISOString(),
-            paymentType,
-            status: 'completed',
-            description: description || `${paymentType.replace('_', ' ')} payment`,
-          });
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    return () => {
-      clearInterval(msgInterval);
-      clearInterval(countdownInterval);
     };
+    
+    processPayment();
   }, [isProcessing]);
 
   const handleSubmit = (e: React.FormEvent) => {
