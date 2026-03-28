@@ -23,7 +23,8 @@ export default function MakeContribution({ isOpen, onClose }: MakeContributionPr
     e.preventDefault();
     const member = members.find((m: any) => m.id === form.memberId);
     if (!member) return;
-    addContribution({
+
+    const contributionData = {
       member_id: form.memberId,
       amount: Number(form.amount),
       date: new Date().toISOString().split('T')[0],
@@ -32,7 +33,10 @@ export default function MakeContribution({ isOpen, onClose }: MakeContributionPr
       status: 'completed',
       method: form.method,
       reference: form.reference || `AUTO${Date.now()}`,
-    });
+    };
+
+    console.log('DEBUG: Sending contribution data:', contributionData);
+    addContribution(contributionData);
     setForm({ memberId: '', amount: '', type: 'monthly', method: 'mpesa', reference: '' });
     onClose();
   };
