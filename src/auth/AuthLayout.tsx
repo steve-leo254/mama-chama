@@ -23,8 +23,16 @@ export default function AuthLayout({
   onBack 
 }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-emerald-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl mx-auto">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: 'linear-gradient(to bottom right, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.9), rgba(236, 253, 245, 0.9)), url(/man-on-mobile-jacaranda.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      <div className="w-full max-w-6xl mx-auto relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Hero Section */}
           <div className="text-center lg:text-left space-y-6 animate-slide-in-left">

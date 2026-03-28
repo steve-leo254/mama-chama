@@ -1,7 +1,7 @@
 // src/components/member-portal/transactions/WithdrawRequestModal.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../../ui/Modal';
-import { useApp } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext.tsx';
 import { AlertTriangle, Smartphone, CreditCard } from 'lucide-react';
 
 interface WithdrawRequestModalProps {
@@ -17,11 +17,22 @@ export default function WithdrawRequestModal({ isOpen, onClose }: WithdrawReques
     method: 'mpesa' as 'mpesa' | 'bank',
     accountDetails: '',
   });
+  const [maxWithdrawal, setMaxWithdrawal] = useState(0);
+
+  useEffect(() => {
+    if (currentUser) {
+      getMemberStats(currentUser.id)
+        .then((stats: any) => {
+          setMaxWithdrawal(stats?.savingsBalance || 0);
+        })
+        .catch((err: unknown) => {
+          console.error('Failed to load member stats:', err);
+          setMaxWithdrawal(0);
+        });
+    }
+  }, [currentUser, getMemberStats]);
 
   if (!currentUser) return null;
-
-  const memberStats = getMemberStats(currentUser.id);
-  const maxWithdrawal = memberStats.savingsBalance;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

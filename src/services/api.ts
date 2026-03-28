@@ -1,5 +1,8 @@
 // src/services/api.ts
-import type { Member, Contribution, Loan, Meeting, MerryGoRoundCycle, Transaction, Fine, DepositRecord, WithdrawRequest, LoanRepaymentRecord, MemberStats, Notification } from '../types';
+import type {
+  Member, Contribution, Loan, Fine, DepositRecord, WithdrawRequest,
+  Transaction, LoanRepaymentRecord, LoanRepayment, MerryGoRoundCycle, MemberStats, Meeting, Notification
+} from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
@@ -72,11 +75,36 @@ class ApiClient {
     });
   }
 
+  async postWithFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = this.getToken();
+    const headers = {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
+  }
+
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE' });
   }
 }
 
@@ -89,18 +117,29 @@ export const authAPI = {
   getMe: () => apiClient.get<Member>('/auth/me'),
   validateToken: () => apiClient.get<Member>('/auth/me'),
   changePassword: (data: any) => apiClient.post<any>('/auth/change-password', data),
+  forgotPassword: (email: string) => apiClient.post<any>('/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) => apiClient.post<any>('/auth/reset-password', { token, newPassword }),
   setToken: (token: string) => apiClient.setToken(token),
   getToken: () => apiClient.getToken(),
 };
 
 // Members API
 export const membersAPI = {
-  list: (params?: { status?: string; search?: string }) => 
-    apiClient.get<Member[]>(`/members${new URLSearchParams(params as any).toString()}`),
+  list: (params?: { status?: string; search?: string }) => {
+    const queryString = params && Object.keys(params).length > 0 
+      ? `?${new URLSearchParams(params as any).toString()}` 
+      : '';
+    return apiClient.get<Member[]>(`/members${queryString}`);
+  },
   get: (id: string) => apiClient.get<Member>(`/members/${id}`),
   create: (data: any) => apiClient.post<Member>('/members', data),
   update: (id: string, data: any) => apiClient.put<Member>(`/members/${id}`, data),
   getStats: (id: string) => apiClient.get<MemberStats>(`/members/${id}/stats`),
+  uploadAvatar: (memberId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.postWithFormData<any>(`/members/${memberId}/upload-avatar`, formData);
+  },
 };
 
 // Contributions API
@@ -141,6 +180,63 @@ export const depositsAPI = {
 export const transactionsAPI = {
   list: (member_id?: string) =>
     apiClient.get<Transaction[]>(`/transactions${member_id ? `?member_id=${member_id}` : ''}`),
+  create: (data: any) => apiClient.post<Transaction>('/transactions', data),
+};
+
+// Withdraw Requests API
+export const withdrawRequestsAPI = {
+  list: (member_id?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (member_id) params.append('member_id', member_id);
+    if (status && status !== 'all') params.append('status', status);
+    const queryString = params.toString();
+    return apiClient.get<WithdrawRequest[]>(`/withdrawals${queryString ? `?${queryString}` : ''}`);
+  },
+  create: (data: any) => apiClient.post<WithdrawRequest>('/withdrawals', data),
+  approve: (id: string) => apiClient.put<WithdrawRequest>(`/withdrawals/${id}/approve`),
+  reject: (id: string) => apiClient.put<WithdrawRequest>(`/withdrawals/${id}/reject`),
+};
+
+// Loan Repayments API
+export const loanRepaymentsAPI = {
+  list: (loan_id?: string) => {
+    const params = new URLSearchParams();
+    if (loan_id) params.append('loan_id', loan_id);
+    const queryString = params.toString();
+    return apiClient.get<LoanRepayment[]>(`/loan-repayments${queryString ? `?${queryString}` : ''}`);
+  },
+  create: (data: any) => apiClient.post<LoanRepayment>('/loan-repayments', data),
+};
+
+// Merry-Go-Round API
+export const merryGoRoundAPI = {
+  list: () => apiClient.get<MerryGoRoundCycle[]>('/merry-go-round'),
+  create: (data: any) => apiClient.post<MerryGoRoundCycle>('/merry-go-round', data),
+  update: (id: string, data: any) => apiClient.put<MerryGoRoundCycle>(`/merry-go-round/${id}`, data),
+  delete: (id: string) => apiClient.delete<any>(`/merry-go-round/${id}`),
+};
+
+// Meetings API
+export const meetingsAPI = {
+  list: (status?: string) => {
+    const params = status && status !== 'all' ? `?status=${status}` : '';
+    return apiClient.get<Meeting[]>(`/meetings${params}`);
+  },
+  create: (data: any) => apiClient.post<Meeting>('/meetings', data),
+  update: (id: string, data: any) => apiClient.put<Meeting>(`/meetings/${id}`, data),
+};
+
+// Notifications API
+export const notificationsAPI = {
+  list: () => apiClient.get<Notification[]>('/notifications'),
+  markRead: (id: string) => apiClient.put<any>(`/notifications/${id}/read`),
+  markAllRead: () => apiClient.put<any>('/notifications/read-all'),
+};
+
+// Chama Settings API
+export const chamaSettingsAPI = {
+  get: () => apiClient.get<any>('/settings'),
+  update: (data: any) => apiClient.put<any>('/settings', data),
 };
 
 export default apiClient;

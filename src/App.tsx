@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext.tsx';
+import { ToastProvider } from './components/ui/Toast.tsx';
 
 // Admin Layout & Pages
 import Layout from './layout/Layout';
@@ -141,7 +142,9 @@ function AppContent() {
 function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AppProvider>
   );
 }

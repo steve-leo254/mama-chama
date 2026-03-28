@@ -1,7 +1,9 @@
 // src/components/auth/ResetPasswordPage.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Eye, EyeOff, Loader2, CheckCircle, Circle, Lock, KeyRound } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import AuthLayout from './AuthLayout.tsx';
+import { authAPI } from '../services/api.ts';
 
 interface ResetPasswordPageProps {
   onBack: () => void;
@@ -9,6 +11,7 @@ interface ResetPasswordPageProps {
 }
 
 export default function ResetPasswordPage({ onBack, onSuccess }: ResetPasswordPageProps) {
+  const [searchParams] = useSearchParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +19,16 @@ export default function ResetPasswordPage({ onBack, onSuccess }: ResetPasswordPa
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [tokenValid, setTokenValid] = useState(true);
+
+  const resetToken = searchParams.get('token');
+
+  useEffect(() => {
+    if (!resetToken) {
+      setError('Invalid reset link. Please request a new password reset.');
+      setTokenValid(false);
+    }
+  }, [resetToken]);
 
   const getPasswordStrength = (): { level: number; label: string; color: string } => {
     if (!password) return { level: 0, label: '', color: '' };
@@ -38,6 +51,11 @@ export default function ResetPasswordPage({ onBack, onSuccess }: ResetPasswordPa
     e.preventDefault();
     setError('');
 
+    if (!tokenValid || !resetToken) {
+      setError('Invalid reset link. Please request a new password reset.');
+      return;
+    }
+
     if (!password || password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -57,10 +75,11 @@ export default function ResetPasswordPage({ onBack, onSuccess }: ResetPasswordPa
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await authAPI.resetPassword(resetToken, password);
       setSuccess(true);
-    } catch {
-      setError('Something went wrong. Please try again.');
+      console.log('Password reset successful');
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset password. The link may have expired.');
     } finally {
       setLoading(false);
     }

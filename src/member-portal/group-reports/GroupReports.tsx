@@ -4,10 +4,10 @@ import { useApp } from '../../context/AppContext';
 import Badge from '../../ui/Badge';
 import ProgressBar from '../../ui/ProgressBar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Wallet, Users, PiggyBank, HandCoins, AlertTriangle, TrendingUp, Download } from 'lucide-react';
+import { Wallet, Users, PiggyBank, HandCoins, AlertTriangle, Download } from 'lucide-react';
 
 export default function GroupReports() {
-  const { stats, members, contributions, loans, fines } = useApp();
+  const { stats, members, contributions, fines } = useApp();
   const [activeTab, setActiveTab] = useState<'balances' | 'contributions' | 'fines'>('balances');
 
   const activeMembers = members.filter(m => m.status === 'active');
@@ -18,14 +18,14 @@ export default function GroupReports() {
   // Contribution per member
   const memberContribData = activeMembers.map(m => ({
     name: m.name.split(' ')[0],
-    amount: contributions.filter(c => c.memberId === m.id && c.status === 'completed').reduce((s, c) => s + c.amount, 0),
+    amount: contributions.filter(c => c.member_id === m.id && c.status === 'completed').reduce((s, c) => s + c.amount, 0),
   })).sort((a, b) => b.amount - a.amount);
 
   // Balance breakdown
   const balanceData = [
     { name: 'Savings', value: stats.totalContributions, color: '#10b981' },
-    { name: 'Loans Out', value: stats.totalLoansAmount, color: '#f59e0b' },
-    { name: 'Available', value: stats.availableBalance, color: '#3b82f6' },
+    { name: 'Loans Out', value: stats.totalLoans, color: '#f59e0b' },
+    { name: 'Available', value: stats.availableFunds, color: '#3b82f6' },
   ];
 
   // Monthly collection data
@@ -91,14 +91,14 @@ export default function GroupReports() {
                 <Wallet className="w-5 h-5 text-primary-600" />
                 <span className="text-sm text-primary-700">Available Balance</span>
               </div>
-              <p className="text-2xl font-bold text-primary-900">KES {stats.availableBalance.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary-900">KES {stats.availableFunds.toLocaleString()}</p>
             </div>
             <div className="card bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
               <div className="flex items-center gap-2 mb-2">
                 <HandCoins className="w-5 h-5 text-amber-600" />
                 <span className="text-sm text-amber-700">Loans Outstanding</span>
               </div>
-              <p className="text-2xl font-bold text-amber-900">KES {stats.totalLoansAmount.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-amber-900">KES {stats.totalLoans.toLocaleString()}</p>
             </div>
             <div className="card bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200">
               <div className="flex items-center gap-2 mb-2">
@@ -179,7 +179,7 @@ export default function GroupReports() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {members.map(m => {
-                    const memberFines = fines.filter(f => f.memberId === m.id);
+                    const memberFines = fines.filter(f => f.member_id === m.id);
                     const unpaidAmt = memberFines.filter(f => f.status === 'unpaid').reduce((s, f) => s + f.amount, 0);
                     return (
                       <tr key={m.id} className="hover:bg-gray-50/50">
@@ -193,10 +193,10 @@ export default function GroupReports() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right text-sm font-semibold text-emerald-600">
-                          KES {m.totalContributed.toLocaleString()}
+                          KES {(m.totalContributed || 0).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-right text-sm font-semibold text-amber-600 hidden sm:table-cell">
-                          KES {m.totalBorrowed.toLocaleString()}
+                          KES {(m.totalBorrowed || 0).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-right text-sm hidden md:table-cell">
                           {unpaidAmt > 0 ? (
@@ -265,7 +265,7 @@ export default function GroupReports() {
             <div className="divide-y divide-gray-50">
               {members.filter(m => m.status === 'active').map(m => {
                 const decContrib = contributions.find(
-                  c => c.memberId === m.id && c.month === 'December 2024' && c.type === 'monthly'
+                  c => c.member_id === m.id && c.month === 'December 2024' && c.type === 'monthly'
                 );
                 return (
                   <div key={m.id} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
@@ -334,7 +334,7 @@ export default function GroupReports() {
                 <tbody className="divide-y divide-gray-50">
                   {fines.map(f => (
                     <tr key={f.id} className="hover:bg-gray-50/50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{f.memberName}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{f.member_name}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{f.reason}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">KES {f.amount}</td>
                       <td className="px-6 py-4 text-center">

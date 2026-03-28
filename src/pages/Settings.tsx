@@ -1,11 +1,49 @@
 // src/pages/Settings.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Save, Shield, Bell, Users, FileText } from 'lucide-react';
+import { chamaSettingsAPI } from '../services/api';
 
 export default function Settings() {
   const {} = useApp();
   const [activeTab, setActiveTab] = useState('general');
+  const [settings, setSettings] = useState({
+    chama_name: 'Mama Chama',
+    description: "A women's savings and investment group focused on financial empowerment",
+    monthly_contribution: 5000,
+    late_penalty: 500,
+    loan_interest_rate: 10,
+    max_loan_duration: 12,
+    meeting_day: '',
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Fetch settings on component mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await chamaSettingsAPI.get();
+        setSettings(data);
+      } catch (err) {
+        console.error('Failed to fetch settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    setLoading(true);
+    try {
+      await chamaSettingsAPI.update(settings);
+      // Show success message
+      alert('Settings saved successfully!');
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      alert('Failed to save settings');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'general', label: 'General', icon: FileText },
@@ -52,37 +90,67 @@ export default function Settings() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Chama Name</label>
-                  <input type="text" defaultValue="Mama Chama" className="input-field" />
+                  <input 
+                    type="text" 
+                    value={settings.chama_name || ''} 
+                    onChange={(e) => setSettings({...settings, chama_name: e.target.value})}
+                    className="input-field" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
                   <textarea
-                    defaultValue="A women's savings and investment group focused on financial empowerment"
+                    value={settings.description || ''}
+                    onChange={(e) => setSettings({...settings, description: e.target.value})}
                     className="input-field min-h-[80px] resize-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Monthly Contribution</label>
-                    <input type="number" defaultValue="5000" className="input-field" />
+                    <input 
+                      type="number" 
+                      value={settings.monthly_contribution || 0} 
+                      onChange={(e) => setSettings({...settings, monthly_contribution: Number(e.target.value)})}
+                      className="input-field" 
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Late Penalty</label>
-                    <input type="number" defaultValue="500" className="input-field" />
+                    <input 
+                      type="number" 
+                      value={settings.late_penalty || 0} 
+                      onChange={(e) => setSettings({...settings, late_penalty: Number(e.target.value)})}
+                      className="input-field" 
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Loan Interest Rate (%)</label>
-                    <input type="number" defaultValue="10" className="input-field" />
+                    <input 
+                      type="number" 
+                      value={settings.loan_interest_rate || 0} 
+                      onChange={(e) => setSettings({...settings, loan_interest_rate: Number(e.target.value)})}
+                      className="input-field" 
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Loan Duration (months)</label>
-                    <input type="number" defaultValue="12" className="input-field" />
+                    <input 
+                      type="number" 
+                      value={settings.max_loan_duration || 0} 
+                      onChange={(e) => setSettings({...settings, max_loan_duration: Number(e.target.value)})}
+                      className="input-field" 
+                    />
                   </div>
                 </div>
-                <button className="btn-primary flex items-center gap-2">
-                  <Save className="w-4 h-4" /> Save Changes
+                <button 
+                  onClick={handleSaveSettings}
+                  disabled={loading}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" /> {loading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>

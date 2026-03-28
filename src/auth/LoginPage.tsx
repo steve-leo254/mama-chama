@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
+import { toast } from '../components/ui/Toast';
 import AuthLayout from './AuthLayout.tsx';
 
 interface LoginPageProps {
@@ -14,35 +15,41 @@ export default function LoginPage({ onSwitch, onForgotPassword }: LoginPageProps
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+
+    // Prevent multiple submissions
+    if (loading || loginAttempted) {
+      return;
+    }
 
     if (!email.trim()) {
-      setError('Please enter your email address');
+      toast.error('Validation Error', 'Please enter your email address');
       return;
     }
     if (!password) {
-      setError('Please enter your password');
+      toast.error('Validation Error', 'Please enter your password');
       return;
     }
 
+    setLoginAttempted(true);
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const success = login(email, password);
+      const success = await login(email, password);
       if (!success) {
-        setError('Invalid email or password');
+        toast.error('Login Failed', 'Invalid email or password');
+      } else {
+        toast.success('Login Successful', 'Welcome back to Mama Chama!');
       }
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (err) {
+      toast.error('Login Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+      setTimeout(() => setLoginAttempted(false), 1000); // Reset after 1 second
     }
   };
 
@@ -60,21 +67,13 @@ export default function LoginPage({ onSwitch, onForgotPassword }: LoginPageProps
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h2>
       <p className="text-gray-500 mb-6">Sign in to your account</p>
 
-      {/* Error */}
-      {error && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-3 mb-6 text-sm flex items-center gap-2 animate-slide-up">
-          <span className="text-lg">⚠️</span>
-          {error}
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Email or Username</label>
           <input
             type="text"
             value={email}
-            onChange={(e) => { setEmail(e.target.value); setError(''); }}
+            onChange={(e) => setEmail(e.target.value)}
             className="input-field"
             placeholder="you@email.com"
             autoComplete="email"
@@ -88,7 +87,7 @@ export default function LoginPage({ onSwitch, onForgotPassword }: LoginPageProps
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              onChange={(e) => setPassword(e.target.value)}
               className="input-field pr-12"
               placeholder="••••••••"
               autoComplete="current-password"

@@ -8,9 +8,10 @@ interface LoanCardProps {
   loan: Loan;
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
+  onRepayment?: (loan: Loan) => void;
 }
 
-export default function LoanCard({ loan, onApprove, onReject }: LoanCardProps) {
+export default function LoanCard({ loan, onApprove, onReject, onRepayment }: LoanCardProps) {
   const statusVariant = {
     pending: 'warning' as const,
     approved: 'info' as const,
@@ -24,7 +25,7 @@ export default function LoanCard({ loan, onApprove, onReject }: LoanCardProps) {
     <div className="card-hover">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-gray-900">{loan.memberName}</h3>
+          <h3 className="font-semibold text-gray-900">{loan.member_name}</h3>
           <p className="text-sm text-gray-500 mt-0.5">{loan.purpose}</p>
         </div>
         <Badge variant={statusVariant[loan.status]}>{loan.status}</Badge>
@@ -37,7 +38,7 @@ export default function LoanCard({ loan, onApprove, onReject }: LoanCardProps) {
         </div>
         <div className="bg-gray-50 rounded-xl p-3">
           <p className="text-xs text-gray-500">Total Repayable</p>
-          <p className="text-sm font-bold text-gray-900">KES {loan.totalRepayable.toLocaleString()}</p>
+          <p className="text-sm font-bold text-gray-900">KES {loan.total_repayable.toLocaleString()}</p>
         </div>
       </div>
 
@@ -45,11 +46,11 @@ export default function LoanCard({ loan, onApprove, onReject }: LoanCardProps) {
         <div className="mb-4">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-500">Repayment Progress</span>
-            <span className="font-medium text-gray-900">KES {loan.amountPaid.toLocaleString()}</span>
+            <span className="font-medium text-gray-900">KES {loan.amount_paid.toLocaleString()}</span>
           </div>
           <ProgressBar
-            value={loan.amountPaid}
-            max={loan.totalRepayable}
+            value={loan.amount_paid}
+            max={loan.total_repayable}
             color={loan.status === 'completed' ? 'emerald' : 'primary'}
           />
         </div>
@@ -58,11 +59,11 @@ export default function LoanCard({ loan, onApprove, onReject }: LoanCardProps) {
       <div className="space-y-2 text-sm text-gray-500">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4" />
-          <span>{loan.interestRate}% interest • {loan.duration} months</span>
+          <span>{loan.interest_rate}% interest • {loan.duration} months</span>
         </div>
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          <span>Due: {new Date(loan.dueDate).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          <span>Due: {new Date(loan.due_date).toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
         </div>
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4" />
@@ -79,7 +80,15 @@ export default function LoanCard({ loan, onApprove, onReject }: LoanCardProps) {
 
       {loan.status === 'active' && (
         <div className="mt-4 pt-4 border-t border-gray-100">
-          <p className="text-xs text-gray-500">Monthly payment: <span className="font-semibold text-gray-900">KES {loan.monthlyPayment.toLocaleString()}</span></p>
+          <p className="text-xs text-gray-500">Monthly payment: <span className="font-semibold text-gray-900">KES {loan.monthly_payment.toLocaleString()}</span></p>
+          {onRepayment && (
+            <button 
+              onClick={() => onRepayment(loan)} 
+              className="btn-primary w-full mt-2 text-sm"
+            >
+              Record Repayment
+            </button>
+          )}
         </div>
       )}
     </div>

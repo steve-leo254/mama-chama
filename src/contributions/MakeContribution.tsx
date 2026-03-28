@@ -27,7 +27,6 @@ export default function MakeContribution({ isOpen, onClose }: MakeContributionPr
     const contributionData = {
       member_id: form.memberId,
       amount: Number(form.amount),
-      date: new Date().toISOString().split('T')[0],
       month: new Date().toLocaleDateString('en', { month: 'long', year: 'numeric' }),
       type: form.type,
       status: 'completed',

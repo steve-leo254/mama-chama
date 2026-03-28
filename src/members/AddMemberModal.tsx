@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { useApp } from '../context/AppContext';
+import { toast } from '../components/ui/Toast';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -12,22 +13,67 @@ interface AddMemberModalProps {
 export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps) {
   const { addMember } = useApp();
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', nationalId: '', nextOfKin: '',
+    name: '', email: '', phone: '', nationalId: '', nextOfKin: '', password: '',
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  const sendWelcomeEmail = async (member: any) => {
+    // This would integrate with your email service
+    // For now, we'll show a toast with the credentials
+    toast.info('Member Added', `${member.name} has been added successfully. Email: ${member.email}, Password: ${member.password}`);
+    
+    // In a real implementation, you would send an email here:
+    // await emailService.sendWelcomeEmail(member.email, member.password);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addMember({
-      ...form,
-      avatar: '👩🏾',
-      role: 'member',
-      joinDate: new Date().toISOString().split('T')[0],
-      totalContributed: 0,
-      totalBorrowed: 0,
-      status: 'active',
-    });
-    setForm({ name: '', email: '', phone: '', nationalId: '', nextOfKin: '' });
-    onClose();
+    
+    if (!form.name || !form.email || !form.phone || !form.nationalId || !form.nextOfKin) {
+      toast.error('Validation Error', 'Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const generatedPassword = generatePassword();
+      const newMember = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        national_id: form.nationalId,
+        next_of_kin: form.nextOfKin,
+        username: form.email.split('@')[0] + Math.random().toString(36).substr(2, 5), // Generate unique username
+        password: generatedPassword,
+        avatar: '👩🏾',
+        role: 'member',
+        status: 'active'
+      };
+      
+      console.log('🔍 Creating member with data:', newMember);
+      await addMember(newMember);
+      console.log('✅ Member created successfully');
+      await sendWelcomeEmail({...newMember, password: generatedPassword});
+      
+      setForm({ name: '', email: '', phone: '', nationalId: '', nextOfKin: '', password: '' });
+      onClose();
+      
+      toast.success('Member Added Successfully', `${newMember.name} can now login with their credentials`);
+    } catch (err) {
+      console.error('❌ Error creating member:', err);
+      toast.error('Error', 'Failed to add member. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,8 +140,13 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
         </div>
         <div className="flex gap-3 pt-4">
           <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-          <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2">
-            <UserPlus className="w-4 h-4" /> Add Member
+          <button type="submit" disabled={loading} className="btn-primary flex-1 flex items-center justify-center gap-2">
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full" />
+            ) : (
+              <UserPlus className="w-4 h-4" />
+            )}
+            {loading ? 'Adding...' : 'Add Member'}
           </button>
         </div>
       </form>

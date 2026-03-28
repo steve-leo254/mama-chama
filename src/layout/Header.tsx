@@ -8,6 +8,9 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
+  // Show only active (unread) notifications, limited to 3 most recent
+  const activeNotifications = notifications.filter(n => !n.read).slice(0, 3);
+
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-gray-100">
       <div className="flex items-center justify-between px-4 lg:px-8 py-4">
@@ -62,7 +65,7 @@ export default function Header() {
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
                   </div>
                   <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
-                    {notifications.map((notif) => (
+                    {activeNotifications.map((notif) => (
                       <button
                         key={notif.id}
                         onClick={() => markNotificationRead(notif.id)}

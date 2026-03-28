@@ -1,5 +1,5 @@
 // src/components/member-portal/my-loans/MyLoans.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { type Loan } from '../../types';
 import Badge from '../../ui/Badge';
@@ -11,12 +11,53 @@ export default function MyLoans() {
   const { currentUser, getMemberLoans, getMemberStats, members, applyLoan } = useApp();
   const [showApply, setShowApply] = useState(false);
   const [form, setForm] = useState({ amount: '', duration: '3', purpose: '', guarantor1: '', guarantor2: '' });
+  const [stats, setStats] = useState<any>(null);
 
-  if (!currentUser) return null;
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const loadStats = async () => {
+      try {
+        const memberStats = await getMemberStats(currentUser.id);
+        setStats(memberStats);
+      } catch (err) {
+        console.error('Failed to load member stats:', err);
+        setStats({
+          totalContributed: 0,
+          totalFines: 0,
+          finesPaid: 0,
+          finesUnpaid: 0,
+          activeLoanBalance: 0,
+          totalLoansTaken: 0,
+          savingsBalance: 0,
+          contributionStreak: 0,
+          lastContributionDate: null,
+          pendingWithdrawals: 0,
+        });
+      }
+    };
+
+    loadStats();
+  }, [currentUser, getMemberStats]);
+
+  if (!currentUser || !stats) return null;
 
   const myLoans: Loan[] = getMemberLoans(currentUser.id);
-  const stats = getMemberStats(currentUser.id);
-  const maxLoanAmount = stats.totalContributed * 3;
+  const totalContributed = stats?.totalContributed || 0;
+  
+  // Tiered loan eligibility based on contribution amount
+  let maxLoanMultiplier = 1; // Default 1x for new members
+  if (totalContributed >= 50000) {
+    maxLoanMultiplier = 5; // 5x for 50k+
+  } else if (totalContributed >= 30000) {
+    maxLoanMultiplier = 4; // 4x for 30k+
+  } else if (totalContributed >= 20000) {
+    maxLoanMultiplier = 3; // 3x for 20k+
+  } else if (totalContributed >= 10000) {
+    maxLoanMultiplier = 2; // 2x for 10k+
+  }
+  
+  const maxLoanAmount = totalContributed * maxLoanMultiplier;
 
   const handleApply = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +72,12 @@ export default function MyLoans() {
       memberName: currentUser.name,
       amount,
       interestRate: 10,
-      totalRepayable,
-      amountPaid: 0,
-      monthlyPayment: Math.ceil(totalRepayable / dur),
+      total_repayable: totalRepayable,
+      amount_paid: 0,
+      monthly_payment: Math.ceil(totalRepayable / dur),
       purpose: form.purpose,
-      applicationDate: new Date().toISOString().split('T')[0],
-      dueDate: dueDate.toISOString().split('T')[0],
+      application_date: new Date().toISOString().split('T')[0],
+      due_date: dueDate.toISOString().split('T')[0],
       status: 'pending',
       guarantors: [form.guarantor1, form.guarantor2].filter(Boolean),
       duration: dur,
@@ -73,16 +114,16 @@ export default function MyLoans() {
           <div className="bg-white rounded-xl p-3">
             <p className="text-xs text-gray-500">Max Loan Amount</p>
             <p className="text-lg font-bold text-primary-700">KES {maxLoanAmount.toLocaleString()}</p>
-            <p className="text-[10px] text-gray-400">3x your contributions</p>
+            <p className="text-[10px] text-gray-400">{maxLoanMultiplier}x your contributions</p>
           </div>
           <div className="bg-white rounded-xl p-3">
             <p className="text-xs text-gray-500">Current Balance</p>
-            <p className="text-lg font-bold text-rose-700">KES {stats.activeLoanBalance.toLocaleString()}</p>
+            <p className="text-lg font-bold text-rose-700">KES {(stats?.activeLoanBalance || 0).toLocaleString()}</p>
           </div>
           <div className="bg-white rounded-xl p-3">
             <p className="text-xs text-gray-500">Available to Borrow</p>
             <p className="text-lg font-bold text-emerald-700">
-              KES {Math.max(0, maxLoanAmount - stats.activeLoanBalance).toLocaleString()}
+              KES {Math.max(0, maxLoanAmount - (stats?.activeLoanBalance || 0)).toLocaleString()}
             </p>
           </div>
           <div className="bg-white rounded-xl p-3">
@@ -97,7 +138,7 @@ export default function MyLoans() {
         <div className="card text-center py-16">
           <HandCoins className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900">No Loans Yet</h3>
-          <p className="text-gray-500 text-sm mt-1 mb-6">You can apply for a loan up to 3x your contributions</p>
+          <p className="text-gray-500 text-sm mt-1 mb-6">You can apply for a loan up to {maxLoanMultiplier}x your contributions</p>
           <button onClick={() => setShowApply(true)} className="btn-primary">Apply Now</button>
         </div>
       ) : (
@@ -111,8 +152,8 @@ export default function MyLoans() {
                     <Badge variant={statusVariant[loan.status]} size="md">{loan.status}</Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
-                    <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> Applied: {loan.applicationDate}</span>
-                    <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Due: {loan.dueDate}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> Applied: {loan.application_date}</span>
+                    <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Due: {loan.due_date}</span>
                     <span className="flex items-center gap-1"><Target className="w-4 h-4" /> {loan.duration} months</span>
                   </div>
                 </div>
@@ -125,29 +166,29 @@ export default function MyLoans() {
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500">Interest</p>
-                  <p className="text-sm font-bold">KES {(loan.totalRepayable - loan.amount).toLocaleString()}</p>
+                  <p className="text-sm font-bold">KES {(loan.total_repayable - loan.amount).toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500">Total Due</p>
-                  <p className="text-sm font-bold">KES {loan.totalRepayable.toLocaleString()}</p>
+                  <p className="text-sm font-bold">KES {loan.total_repayable.toLocaleString()}</p>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500">Paid</p>
-                  <p className="text-sm font-bold text-emerald-600">KES {loan.amountPaid.toLocaleString()}</p>
+                  <p className="text-sm font-bold text-emerald-600">KES {loan.amount_paid.toLocaleString()}</p>
                 </div>
                 <div className="bg-rose-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500">Remaining</p>
-                  <p className="text-sm font-bold text-rose-600">KES {(loan.totalRepayable - loan.amountPaid).toLocaleString()}</p>
+                  <p className="text-sm font-bold text-rose-600">KES {(loan.total_repayable - loan.amount_paid).toLocaleString()}</p>
                 </div>
               </div>
 
               {(loan.status === 'active' || loan.status === 'completed') && (
-                <ProgressBar value={loan.amountPaid} max={loan.totalRepayable} color={loan.status === 'completed' ? 'emerald' : 'primary'} />
+                <ProgressBar value={loan.amount_paid} max={loan.total_repayable} color={loan.status === 'completed' ? 'emerald' : 'primary'} />
               )}
 
               <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
                 <Users className="w-3.5 h-3.5" />
-                Guarantors: {loan.guarantors.join(', ')} • Monthly: KES {loan.monthlyPayment.toLocaleString()}
+                Guarantors: {loan.guarantors.join(', ')} • Monthly: KES {loan.monthly_payment.toLocaleString()}
               </div>
             </div>
           ))}
@@ -159,7 +200,7 @@ export default function MyLoans() {
         <form onSubmit={handleApply} className="space-y-4">
           <div className="bg-primary-50 rounded-xl p-4 border border-primary-100">
             <p className="text-sm text-primary-700">
-              You can borrow up to <span className="font-bold">KES {Math.max(0, maxLoanAmount - stats.activeLoanBalance).toLocaleString()}</span>
+              You can borrow up to <span className="font-bold">KES {Math.max(0, maxLoanAmount - (stats?.activeLoanBalance || 0)).toLocaleString()}</span>
             </p>
           </div>
 
@@ -168,7 +209,7 @@ export default function MyLoans() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (KES)</label>
               <input
                 type="number" required min="1000"
-                max={Math.max(0, maxLoanAmount - stats.activeLoanBalance)}
+                max={Math.max(0, maxLoanAmount - (stats?.activeLoanBalance || 0))}
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 className="input-field" placeholder="30000"

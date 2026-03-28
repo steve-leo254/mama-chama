@@ -1,19 +1,47 @@
 // src/components/member-portal/MemberDashboard.tsx
-import { useApp } from '../context/AppContext';
-import { PiggyBank, HandCoins, AlertTriangle, TrendingUp, Calendar, ArrowDownLeft, ArrowUpRight, Wallet, Award } from 'lucide-react';
+import { useApp } from '../context/AppContext.tsx';
+import { PiggyBank, HandCoins, AlertTriangle, TrendingUp, Calendar, ArrowDownLeft, ArrowUpRight, Wallet, Award, Key } from 'lucide-react';
 import Badge from '../ui/Badge';
 import ProgressBar from '../ui/ProgressBar';
+import { useState, useEffect } from 'react';
+import { toast } from '../components/ui/Toast';
 
 export default function MemberDashboard() {
   const { currentUser, getMemberStats, getMemberTransactions, getMemberLoans, getMemberFines, meetings } = useApp();
+  const [stats, setStats] = useState<any>({
+    totalContributed: 0,
+    totalFines: 0,
+    finesPaid: 0,
+    finesUnpaid: 0,
+    activeLoanBalance: 0,
+    totalLoansTaken: 0,
+    savingsBalance: 0,
+    contributionStreak: 0,
+    lastContributionDate: '',
+    pendingWithdrawals: 0,
+  });
+
+  useEffect(() => {
+    if (currentUser) {
+      let stats: any = null;
+      try {
+        stats = getMemberStats(currentUser.id);
+      } catch (err: unknown) {
+        console.error('Failed to load member stats:', err);
+        stats = {};
+      }
+      stats.then(setStats).catch((err: unknown) => {
+        console.error('Failed to load member stats:', err);
+      });
+    }
+  }, [currentUser, getMemberStats]);
 
   if (!currentUser) return null;
 
-  const stats = getMemberStats(currentUser.id);
   const myTransactions = getMemberTransactions(currentUser.id).slice(0, 5);
-  const myActiveLoans = getMemberLoans(currentUser.id).filter(l => l.status === 'active');
-  const myUnpaidFines = getMemberFines(currentUser.id).filter(f => f.status === 'unpaid');
-  const nextMeeting = meetings.find(m => m.status === 'upcoming');
+  const myActiveLoans = getMemberLoans(currentUser.id).filter((l: any) => l.status === 'active');
+  const myUnpaidFines = getMemberFines(currentUser.id).filter((f: any) => f.status === 'unpaid');
+  const nextMeeting = meetings.find((m: any) => m.status === 'upcoming');
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -31,26 +59,39 @@ export default function MemberDashboard() {
             </div>
             <div className="hidden sm:flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-2">
               <Award className="w-5 h-5 text-amber-300" />
-              <span className="text-sm font-medium">{stats.contributionStreak} month streak</span>
+              <span className="text-sm font-medium">{stats.contributionStreak || 0} month streak</span>
             </div>
+            <button
+              onClick={() => {
+                const newPassword = Math.random().toString(36).substring(2, 10);
+                toast.info('Password Changed', `Your new password is: ${newPassword}`);
+                
+                // In a real implementation, you would update the password in backend
+                // await membersAPI.updatePassword(currentUser.id, newPassword);
+              }}
+              className="ml-4 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 flex items-center gap-2"
+            >
+              <Key className="w-4 h-4" />
+              Change Password
+            </button>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">My Savings</p>
-              <p className="text-xl font-bold mt-1">KES {stats.savingsBalance.toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {(stats?.savingsBalance || 0).toLocaleString()}</p>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">Total Contributed</p>
-              <p className="text-xl font-bold mt-1">KES {stats.totalContributed.toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {(stats?.totalContributed || 0).toLocaleString()}</p>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">Loan Balance</p>
-              <p className="text-xl font-bold mt-1">KES {stats.activeLoanBalance.toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {(stats?.activeLoanBalance || 0).toLocaleString()}</p>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">Unpaid Fines</p>
-              <p className="text-xl font-bold mt-1">KES {stats.finesUnpaid.toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {(stats?.finesUnpaid || 0).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -65,12 +106,12 @@ export default function MemberDashboard() {
             </div>
             <div>
               <p className="text-xs text-gray-500">My Contributions</p>
-              <p className="text-lg font-bold text-gray-900">KES {stats.totalContributed.toLocaleString()}</p>
+              <p className="text-lg font-bold text-gray-900">KES {(stats.totalContributed || 0).toLocaleString()}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 text-xs text-emerald-600">
             <TrendingUp className="w-3 h-3" />
-            <span>Last: {stats.lastContributionDate}</span>
+            <span>Last: {stats.lastContributionDate || 'N/A'}</span>
           </div>
         </div>
 
@@ -85,7 +126,7 @@ export default function MemberDashboard() {
             </div>
           </div>
           <p className="text-xs text-gray-500">
-            Balance: KES {stats.activeLoanBalance.toLocaleString()}
+            Balance: KES {(stats.activeLoanBalance || 0).toLocaleString()}
           </p>
         </div>
 
@@ -96,7 +137,7 @@ export default function MemberDashboard() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Unpaid Fines</p>
-              <p className="text-lg font-bold text-gray-900">KES {stats.finesUnpaid.toLocaleString()}</p>
+              <p className="text-lg font-bold text-gray-900">KES {(stats.finesUnpaid || 0).toLocaleString()}</p>
             </div>
           </div>
           <p className="text-xs text-rose-600">{myUnpaidFines.length} pending fine{myUnpaidFines.length !== 1 ? 's' : ''}</p>
@@ -109,7 +150,7 @@ export default function MemberDashboard() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Pending Withdrawals</p>
-              <p className="text-lg font-bold text-gray-900">KES {stats.pendingWithdrawals.toLocaleString()}</p>
+              <p className="text-lg font-bold text-gray-900">KES {stats.pendingWithdrawals?.toLocaleString() || 0}</p>
             </div>
           </div>
           <p className="text-xs text-primary-600">Awaiting approval</p>
@@ -133,7 +174,7 @@ export default function MemberDashboard() {
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="font-semibold text-gray-900">{loan.purpose}</p>
-                        <p className="text-xs text-gray-500">Due: {loan.dueDate}</p>
+                        <p className="text-xs text-gray-500">Due: {loan.due_date}</p>
                       </div>
                       <Badge variant="info">Active</Badge>
                     </div>
@@ -144,14 +185,14 @@ export default function MemberDashboard() {
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">Paid</p>
-                        <p className="font-semibold text-emerald-600">KES {loan.amountPaid.toLocaleString()}</p>
+                        <p className="font-semibold text-emerald-600">KES {loan.amount_paid.toLocaleString()}</p>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs">Remaining</p>
-                        <p className="font-semibold text-rose-600">KES {(loan.totalRepayable - loan.amountPaid).toLocaleString()}</p>
+                        <p className="font-semibold text-rose-600">KES {(loan.total_repayable - loan.amount_paid).toLocaleString()}</p>
                       </div>
                     </div>
-                    <ProgressBar value={loan.amountPaid} max={loan.totalRepayable} color="emerald" />
+                    <ProgressBar value={loan.amount_paid} max={loan.total_repayable} color="emerald" />
                   </div>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 // src/components/contributions/ContributionsList.tsx
 import { useState } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext.tsx';
+import type { Contribution } from '../types';
 import Badge from '../ui/Badge';
 import MakeContribution from './MakeContribution';
 import { Plus, Download } from 'lucide-react';
@@ -11,7 +12,7 @@ export default function ContributionsList() {
   const [showModal, setShowModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'pending' | 'overdue'>('all');
 
-  const filtered = contributions.filter(c =>
+  const filtered = contributions.filter((c: Contribution) =>
     filterStatus === 'all' || c.status === filterStatus
   );
 
@@ -68,7 +69,7 @@ export default function ContributionsList() {
           >
             {f}
             <span className="ml-1.5 text-xs">
-              ({f === 'all' ? contributions.length : contributions.filter(c => c.status === f).length})
+              ({f === 'all' ? contributions.length : contributions.filter((c: Contribution) => c.status === f).length})
             </span>
           </button>
         ))}
@@ -89,10 +90,10 @@ export default function ContributionsList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.map((c) => (
+              {filtered.map((c: Contribution) => (
                 <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-900">{c.memberName}</p>
+                    <p className="text-sm font-medium text-gray-900">{c.member_name}</p>
                     <p className="text-xs text-gray-500">{c.month}</p>
                   </td>
                   <td className="px-6 py-4">
@@ -107,7 +108,7 @@ export default function ContributionsList() {
                     <span className="text-sm text-gray-600 capitalize">{c.method}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant={statusVariant[c.status]}>{c.status}</Badge>
+                    <Badge variant={statusVariant[c.status as keyof typeof statusVariant]}>{c.status}</Badge>
                   </td>
                   <td className="px-6 py-4 hidden lg:table-cell">
                     <span className="text-sm text-gray-500">{c.date}</span>

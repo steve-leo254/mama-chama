@@ -17,12 +17,12 @@ export interface Member {
 
 export interface Contribution {
   id: string;
-  memberId: string;
-  memberName: string;
+  member_id: string;
+  member_name: string;
   amount: number;
   date: string;
   month: string;
-  type: 'monthly' | 'special' | 'penalty' | 'merry-go-round';
+  type: 'monthly' | 'special' | 'penalty' | 'merry_go_round';
   status: 'completed' | 'pending' | 'overdue';
   method: 'mpesa' | 'bank' | 'cash';
   reference: string;
@@ -30,17 +30,17 @@ export interface Contribution {
 
 export interface Loan {
   id: string;
-  memberId: string;
-  memberName: string;
+  member_id: string;
+  member_name: string;
   amount: number;
-  interestRate: number;
-  totalRepayable: number;
-  amountPaid: number;
-  monthlyPayment: number;
+  interest_rate: number;
+  total_repayable: number;
+  amount_paid: number;
+  monthly_payment: number;
   purpose: string;
-  applicationDate: string;
-  approvalDate?: string;
-  dueDate: string;
+  application_date: string;
+  approval_date?: string;
+  due_date: string;
   status: 'pending' | 'approved' | 'active' | 'completed' | 'defaulted' | 'rejected';
   guarantors: string[];
   duration: number;
@@ -48,45 +48,45 @@ export interface Loan {
 
 export interface LoanRepaymentRecord {
   id: string;
-  loanId: string;
-  memberId: string;
+  loan_id: string;
+  member_id: string;
   amount: number;
   date: string;
   method: 'mpesa' | 'bank' | 'cash';
   reference: string;
-  balanceAfter: number;
+  balance_after: number;
 }
 
 export interface Fine {
   id: string;
-  memberId: string;
-  memberName: string;
+  member_id: string;
+  member_name: string;
   amount: number;
   reason: string;
   date: string;
   status: 'paid' | 'unpaid';
-  paidDate?: string;
+  paid_date?: string;
   month: string;
 }
 
 export interface WithdrawRequest {
   id: string;
-  memberId: string;
-  memberName: string;
+  member_id: string;
+  member_name: string;
   amount: number;
   reason: string;
   date: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed';
-  approvedBy?: string;
-  approvedDate?: string;
+  approved_by?: string;
+  approved_date?: string;
   method: 'mpesa' | 'bank';
-  accountDetails: string;
+  account_details: string;
 }
 
 export interface DepositRecord {
   id: string;
-  memberId: string;
-  memberName: string;
+  member_id: string;
+  member_name: string;
   amount: number;
   date: string;
   type: 'contribution' | 'loan_repayment' | 'fine_payment' | 'savings';
@@ -112,8 +112,8 @@ export interface Meeting {
 export interface MerryGoRoundCycle {
   id: string;
   cycle: number;
-  recipientId: string;
-  recipientName: string;
+  recipient_id: string;
+  recipient_name: string;
   amount: number;
   date: string;
   status: 'upcoming' | 'completed' | 'current';
@@ -125,16 +125,23 @@ export interface Transaction {
   amount: number;
   date: string;
   description: string;
-  memberId: string;
-  memberName: string;
+  member_id: string;
+  member_name: string;
   direction: 'in' | 'out';
   balance?: number;
 }
 
 export interface ChamaStats {
-  totalMembers: number;
-  totalContributions: number;
-  totalLoansActive: number;
+  total_members: number;
+  total_contributions: number;
+  total_loans_active: number;
+  total_loans_amount: number;
+  available_balance: number;
+  monthly_target: number;
+  monthly_collected: number;
+  next_meeting: string;
+  total_fines_collected: number;
+  total_savings: number;
   totalLoansAmount: number;
   availableBalance: number;
   monthlyTarget: number;
@@ -155,6 +162,17 @@ export interface MemberStats {
   contributionStreak: number;
   lastContributionDate: string;
   pendingWithdrawals: number;
+}
+
+export interface LoanRepayment {
+  id: string;
+  loan_id: string;
+  member_id: string;
+  amount: number;
+  date: string;
+  method: string;
+  reference?: string;
+  created_at: string;
 }
 
 export interface Notification {

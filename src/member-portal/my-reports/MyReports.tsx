@@ -1,5 +1,5 @@
 // src/components/member-portal/my-reports/MyReports.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import Badge from '../../ui/Badge';
 import ProgressBar from '../../ui/ProgressBar';
@@ -11,10 +11,49 @@ export default function MyReports() {
     getMemberLoans, getMemberLoanRepayments
   } = useApp();
   const [activeTab, setActiveTab] = useState<'contributions' | 'fines' | 'loans'>('contributions');
+  const [stats, setStats] = useState<any>(null);
 
-  if (!currentUser) return null;
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const loadStats = async () => {
+      try {
+        const memberStats = await getMemberStats(currentUser.id);
+        setStats(memberStats);
+      } catch (err) {
+        console.error('Failed to load member stats:', err);
+        setStats({
+          totalContributed: 0,
+          totalFines: 0,
+          finesPaid: 0,
+          finesUnpaid: 0,
+          activeLoanBalance: 0,
+          totalLoansTaken: 0,
+          savingsBalance: 0,
+          contributionStreak: 0,
+          lastContributionDate: null,
+          pendingWithdrawals: 0,
+        });
+      }
+    };
 
-  const stats = getMemberStats(currentUser.id);
+    loadStats();
+  }, [currentUser, getMemberStats]);
+
+  if (!currentUser || !stats) return null;
+
+  // Show loading state while stats are being fetched
+  if (stats && typeof stats.totalContributed === 'undefined') {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading your reports...</p>
+        </div>
+      </div>
+    );
+  }
+
   const myContributions = getMemberContributions(currentUser.id).sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -236,7 +275,7 @@ export default function MyReports() {
                       <td className="px-6 py-3 text-center">
                         <Badge variant={f.status === 'paid' ? 'success' : 'danger'}>{f.status}</Badge>
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-500 hidden md:table-cell">{f.paidDate || '—'}</td>
+                      <td className="px-6 py-3 text-sm text-gray-500 hidden md:table-cell">{f.paid_date || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -307,7 +346,7 @@ export default function MyReports() {
                     }>{loan.status}</Badge>
                   </div>
                   <p className="text-sm text-gray-500">
-                    Applied: {loan.applicationDate} • Due: {loan.dueDate}
+                    Applied: {loan.application_date} • Due: {loan.due_date}
                   </p>
                 </div>
               </div>
@@ -318,21 +357,21 @@ export default function MyReports() {
                   <p className="text-sm font-bold text-gray-900">KES {loan.amount.toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500">Interest ({loan.interestRate}%)</p>
-                  <p className="text-sm font-bold text-gray-900">KES {(loan.totalRepayable - loan.amount).toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">Interest ({loan.interest_rate}%)</p>
+                  <p className="text-sm font-bold text-gray-900">KES {(loan.total_repayable - loan.amount).toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500">Total Repayable</p>
-                  <p className="text-sm font-bold text-gray-900">KES {loan.totalRepayable.toLocaleString()}</p>
+                  <p className="text-sm font-bold text-gray-900">KES {loan.total_repayable.toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500">Paid</p>
-                  <p className="text-sm font-bold text-emerald-600">KES {loan.amountPaid.toLocaleString()}</p>
+                  <p className="text-sm font-bold text-emerald-600">KES {loan.amount_paid.toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-500">Balance</p>
                   <p className="text-sm font-bold text-rose-600">
-                    KES {(loan.totalRepayable - loan.amountPaid).toLocaleString()}
+                    KES {(loan.total_repayable - loan.amount_paid).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -340,15 +379,14 @@ export default function MyReports() {
               {(loan.status === 'active' || loan.status === 'completed') && (
                 <div className="mb-4">
                   <ProgressBar
-                    value={loan.amountPaid}
-                    max={loan.totalRepayable}
+                    value={loan.amount_paid}
+                    max={loan.total_repayable}
                     color={loan.status === 'completed' ? 'emerald' : 'primary'}
                   />
                 </div>
               )}
 
-              {/* Repayment History */}
-              {myRepayments.filter(r => r.loanId === loan.id).length > 0 && (
+              {(loan.status === 'active' || loan.status === 'completed') && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">Repayment History</h4>
                   <div className="overflow-x-auto">
@@ -364,7 +402,7 @@ export default function MyReports() {
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {myRepayments
-                          .filter(r => r.loanId === loan.id)
+                          .filter(r => r.loan_id === loan.id)
                           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                           .map(r => (
                             <tr key={r.id}>
@@ -375,7 +413,7 @@ export default function MyReports() {
                               <td className="py-2 text-sm text-gray-500 capitalize hidden sm:table-cell">{r.method}</td>
                               <td className="py-2 text-xs text-gray-400 font-mono hidden sm:table-cell">{r.reference}</td>
                               <td className="py-2 text-sm font-semibold text-gray-900 text-right">
-                                KES {r.balanceAfter.toLocaleString()}
+                                KES {r.balance_after.toLocaleString()}
                               </td>
                             </tr>
                           ))}
@@ -386,7 +424,7 @@ export default function MyReports() {
               )}
 
               <div className="mt-3 text-xs text-gray-500">
-                Guarantors: {loan.guarantors.join(', ')} • Monthly Payment: KES {loan.monthlyPayment.toLocaleString()}
+                Guarantors: {loan.guarantors.join(', ')} • Monthly Payment: KES {loan.monthly_payment.toLocaleString()}
               </div>
             </div>
           ))}

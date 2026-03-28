@@ -1,8 +1,9 @@
 // src/components/member-portal/transactions/DepositModal.tsx
 import { useState } from 'react';
 import Modal from '../../ui/Modal';
+import MpesaPaymentModal, { type PaymentType } from '../../payments/MpesaPaymentModal';
 import { useApp } from '../../context/AppContext';
-import { Smartphone, CreditCard, Banknote } from 'lucide-react';
+import { Smartphone, CreditCard, Banknote, ArrowRight } from 'lucide-react';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -11,159 +12,196 @@ interface DepositModalProps {
 
 export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const { currentUser, addDeposit } = useApp();
-  const [form, setForm] = useState({
-    amount: '',
-    type: 'contribution' as 'contribution' | 'loan_repayment' | 'fine_payment' | 'savings',
-    method: 'mpesa' as 'mpesa' | 'bank' | 'cash',
-    reference: '',
-    description: '',
-  });
+  const [showMpesa, setShowMpesa] = useState(false);
+  const [selectedType, setSelectedType] = useState<PaymentType>('contribution');
+  const [selectedAmount, setSelectedAmount] = useState(5000);
+  const [step, setStep] = useState<'type' | 'method'>('type');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
+  const depositTypes = [
+    { value: 'contribution' as PaymentType, label: 'Monthly Contribution', desc: 'Regular monthly savings', amount: 5000, emoji: '💰', color: 'from-emerald-50 to-emerald-100 border-emerald-200' },
+    { value: 'loan_repayment' as PaymentType, label: 'Loan Repayment', desc: 'Pay towards your loan', amount: 0, emoji: '🏦', color: 'from-amber-50 to-amber-100 border-amber-200' },
+    { value: 'fine_payment' as PaymentType, label: 'Fine Payment', desc: 'Pay outstanding fines', amount: 0, emoji: '⚠️', color: 'from-rose-50 to-rose-100 border-rose-200' },
+    { value: 'savings' as PaymentType, label: 'Extra Savings', desc: 'Additional savings deposit', amount: 0, emoji: '🐷', color: 'from-purple-50 to-purple-100 border-purple-200' },
+  ];
 
-    addDeposit({
-      memberId: currentUser.id,
-      memberName: currentUser.name,
-      amount: Number(form.amount),
-      date: new Date().toISOString().split('T')[0],
-      type: form.type,
-      method: form.method,
-      reference: form.reference || `MP${Date.now().toString().slice(-8)}`,
-      status: 'pending',
-      description: form.description || `${form.type.replace('_', ' ')} deposit`,
-    });
-    setForm({ amount: '', type: 'contribution', method: 'mpesa', reference: '', description: '' });
+  const handleSelectType = (type: PaymentType, defaultAmount: number) => {
+    setSelectedType(type);
+    setSelectedAmount(defaultAmount || 5000);
+    setStep('method');
+  };
+
+  const handleMpesaSuccess = (result: any) => {
+    if (currentUser) {
+      addDeposit({
+        memberId: currentUser.id,
+        memberName: currentUser.name,
+        amount: result.amount,
+        date: new Date().toISOString().split('T')[0],
+        type: selectedType,
+        method: 'mpesa',
+        reference: result.receiptNumber,
+        status: 'completed',
+        description: `M-Pesa ${selectedType.replace('_', ' ')} - ${result.receiptNumber}`,
+      });
+    }
+    setShowMpesa(false);
+    handleClose();
+  };
+
+  const handleBankDeposit = () => {
+    if (currentUser) {
+      addDeposit({
+        memberId: currentUser.id,
+        memberName: currentUser.name,
+        amount: selectedAmount,
+        date: new Date().toISOString().split('T')[0],
+        type: selectedType,
+        method: 'bank',
+        reference: `BNK${Date.now().toString().slice(-8)}`,
+        status: 'pending',
+        description: `Bank ${selectedType.replace('_', ' ')}`,
+      });
+    }
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setStep('type');
     onClose();
   };
 
-  const depositTypes = [
-    { value: 'contribution', label: 'Monthly Contribution', desc: 'Regular monthly savings' },
-    { value: 'loan_repayment', label: 'Loan Repayment', desc: 'Pay towards your loan' },
-    { value: 'fine_payment', label: 'Fine Payment', desc: 'Pay outstanding fines' },
-    { value: 'savings', label: 'Extra Savings', desc: 'Additional savings deposit' },
-  ];
-
-  const methods = [
-    { value: 'mpesa', label: 'M-Pesa', icon: Smartphone, color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-    { value: 'bank', label: 'Bank Transfer', icon: CreditCard, color: 'bg-primary-50 border-primary-200 text-primary-700' },
-    { value: 'cash', label: 'Cash', icon: Banknote, color: 'bg-amber-50 border-amber-200 text-amber-700' },
-  ];
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Make a Deposit" size="md">
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Deposit Type */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">What are you depositing for?</label>
-          <div className="grid grid-cols-2 gap-2">
-            {depositTypes.map((dt) => (
-              <button
-                key={dt.value}
-                type="button"
-                onClick={() => setForm({ ...form, type: dt.value as any })}
-                className={`text-left p-3 rounded-xl border-2 transition-all ${
-                  form.type === dt.value
-                    ? 'border-emerald-500 bg-emerald-50'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                }`}
-              >
-                <p className={`text-sm font-medium ${form.type === dt.value ? 'text-emerald-700' : 'text-gray-900'}`}>
-                  {dt.label}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">{dt.desc}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Amount */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (KES)</label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">KES</span>
-            <input
-              type="number"
-              required
-              min="100"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              className="input-field pl-14 text-lg font-semibold"
-              placeholder="5,000"
-            />
-          </div>
-          {form.type === 'contribution' && (
-            <p className="text-xs text-gray-500 mt-1">💡 Monthly contribution is KES 5,000</p>
-          )}
-        </div>
-
-        {/* Payment Method */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-          <div className="grid grid-cols-3 gap-3">
-            {methods.map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() => setForm({ ...form, method: m.value as any })}
-                className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  form.method === m.value ? m.color : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                <m.icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{m.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* M-Pesa Instructions */}
-        {form.method === 'mpesa' && (
-          <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-            <h4 className="text-sm font-semibold text-emerald-800 mb-2">📱 M-Pesa Payment Instructions</h4>
-            <ol className="text-xs text-emerald-700 space-y-1">
-              <li>1. Go to M-Pesa → Lipa na M-Pesa</li>
-              <li>2. Select Pay Bill</li>
-              <li>3. Business No: <span className="font-bold">123456</span></li>
-              <li>4. Account: <span className="font-bold">{currentUser?.nationalId}</span></li>
-              <li>5. Amount: KES {form.amount || '0'}</li>
-              <li>6. Enter your M-Pesa PIN</li>
-            </ol>
+    <>
+      <Modal isOpen={isOpen && !showMpesa} onClose={handleClose} title="Make a Deposit" size="md">
+        {step === 'type' && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">What are you depositing for?</p>
+            <div className="space-y-3">
+              {depositTypes.map((dt) => (
+                <button
+                  key={dt.value}
+                  onClick={() => handleSelectType(dt.value, dt.amount)}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 bg-gradient-to-r ${dt.color} hover:shadow-md transition-all text-left group`}
+                >
+                  <span className="text-3xl group-hover:scale-110 transition-transform">{dt.emoji}</span>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{dt.label}</h3>
+                    <p className="text-xs text-gray-500">{dt.desc}</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Reference */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">M-Pesa/Bank Reference</label>
-          <input
-            type="text"
-            value={form.reference}
-            onChange={(e) => setForm({ ...form, reference: e.target.value.toUpperCase() })}
-            className="input-field"
-            placeholder="e.g. QWE1234ABC"
-          />
-        </div>
+        {step === 'method' && (
+          <div className="space-y-5">
+            <button onClick={() => setStep('type')} className="text-sm text-gray-500 hover:text-gray-700">
+              ← Back to deposit type
+            </button>
 
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Note (optional)</label>
-          <input
-            type="text"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="input-field"
-            placeholder="e.g. December contribution"
-          />
-        </div>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 text-center">
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Deposit For</p>
+              <p className="font-bold text-gray-900 capitalize mt-1">{selectedType.replace('_', ' ')}</p>
+            </div>
 
-        <div className="flex gap-3 pt-2">
-          <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-          <button type="submit" className="btn-success flex-1">
-            Submit Deposit
-          </button>
-        </div>
-      </form>
-    </Modal>
+            {/* Amount Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (KES)</label>
+              <input
+                type="number"
+                value={selectedAmount}
+                onChange={(e) => setSelectedAmount(Number(e.target.value))}
+                className="input-field text-center text-2xl font-bold"
+                min={100}
+                placeholder="5,000"
+              />
+              {selectedType === 'contribution' && (
+                <p className="text-xs text-gray-400 mt-1 text-center">💡 Monthly contribution is KES 5,000</p>
+              )}
+            </div>
+
+            {/* Payment Method */}
+            <p className="text-sm font-medium text-gray-700">Choose payment method</p>
+            <div className="space-y-3">
+              {/* M-Pesa - Primary */}
+              <button
+                onClick={() => setShowMpesa(true)}
+                className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 hover:border-green-400 hover:shadow-lg hover:shadow-green-500/10 transition-all text-left group"
+              >
+                <div className="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-lg shadow-green-500/30">
+                  <Smartphone className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-900">Pay with M-Pesa</h3>
+                    <span className="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">
+                      RECOMMENDED
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">STK Push or Paybill payment</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {/* Bank Transfer */}
+              <button
+                onClick={handleBankDeposit}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all text-left group"
+              >
+                <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-6 h-6 text-primary-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Bank Transfer</h3>
+                  <p className="text-xs text-gray-500">Requires admin confirmation</p>
+                </div>
+              </button>
+
+              {/* Cash */}
+              <button
+                onClick={() => {
+                  if (currentUser) {
+                    addDeposit({
+                      memberId: currentUser.id,
+                      memberName: currentUser.name,
+                      amount: selectedAmount,
+                      date: new Date().toISOString().split('T')[0],
+                      type: selectedType,
+                      method: 'cash',
+                      reference: `CSH${Date.now().toString().slice(-8)}`,
+                      status: 'pending',
+                      description: `Cash ${selectedType.replace('_', ' ')}`,
+                    });
+                  }
+                  handleClose();
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all text-left group"
+              >
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Banknote className="w-6 h-6 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Cash Payment</h3>
+                  <p className="text-xs text-gray-500">Pay during meeting • Needs confirmation</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* M-Pesa Modal */}
+      <MpesaPaymentModal
+        isOpen={showMpesa}
+        onClose={() => setShowMpesa(false)}
+        amount={selectedAmount}
+        paymentType={selectedType}
+        description={`${selectedType.replace('_', ' ')} deposit`}
+        onSuccess={handleMpesaSuccess}
+        lockedAmount={selectedType === 'contribution'}
+      />
+    </>
   );
 }

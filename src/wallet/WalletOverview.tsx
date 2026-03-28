@@ -4,7 +4,7 @@ import type { Transaction } from '../types';
 import { Wallet, TrendingUp, PiggyBank, HandCoins, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function WalletOverview() {
-  const { stats, transactions }: { stats: any, transactions: Transaction[] } = useApp();
+  const { stats, transactions, loans }: { stats: any, transactions: Transaction[], loans: any[] } = useApp();
 
   // Provide default values to prevent undefined errors
   const safeStats = {
@@ -14,14 +14,56 @@ export default function WalletOverview() {
   };
 
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const safeLoans = Array.isArray(loans) ? loans : [];
 
+  // Calculate Total In (money coming into chama)
   const totalIn: number = safeTransactions
-    .filter((t: Transaction) => ['contribution', 'loan_repayment', 'penalty', 'interest'].includes(t.type))
+    .filter((t: Transaction) => ['contribution', 'loan_repayment', 'penalty', 'interest', 'fine_payment'].includes(t.type))
     .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
 
+  // Calculate Total Out (money going out from chama)
   const totalOut: number = safeTransactions
-    .filter((t: Transaction) => ['loan_disbursement', 'merry_go_round'].includes(t.type))
+    .filter((t: Transaction) => ['loan_disbursement', 'merry_go_round', 'withdrawal'].includes(t.type))
     .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+
+  // Calculate Outstanding Loans (total amount owed by members)
+  const outstandingLoans: number = safeLoans
+    .filter((loan: any) => loan.status === 'active')
+    .reduce((sum: number, loan: any) => sum + (loan.total_repayable - loan.amount_paid), 0);
+
+  const activeLoansCount: number = safeLoans.filter((loan: any) => loan.status === 'active').length;
+
+  // Calculate Interest Earned from all loans
+  const interestEarned: number = safeLoans
+    .reduce((sum: number, loan: any) => sum + (loan.total_repayable - loan.amount), 0);
+
+  // Calculate monthly growth (comparing current month contributions to previous month)
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const currentMonthContributions = safeTransactions
+    .filter((t: Transaction) => {
+      const transactionDate = new Date(t.date);
+      return t.type === 'contribution' && 
+             transactionDate.getMonth() === currentMonth && 
+             transactionDate.getFullYear() === currentYear;
+    })
+    .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+
+  const previousMonthContributions = safeTransactions
+    .filter((t: Transaction) => {
+      const transactionDate = new Date(t.date);
+      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      return t.type === 'contribution' && 
+             transactionDate.getMonth() === prevMonth && 
+             transactionDate.getFullYear() === prevYear;
+    })
+    .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+
+  const monthlyGrowth = previousMonthContributions > 0 
+    ? ((currentMonthContributions - previousMonthContributions) / previousMonthContributions * 100)
+    : 0;
 
   return (
     <div>
@@ -72,7 +114,7 @@ export default function WalletOverview() {
           </div>
           <p className="text-2xl font-bold text-gray-900">KES {safeStats.totalContributions.toLocaleString()}</p>
           <div className="flex items-center gap-1 mt-2 text-emerald-600 text-sm">
-            <TrendingUp className="w-4 h-4" /> +8.2% this month
+            <TrendingUp className="w-4 h-4" /> {monthlyGrowth > 0 ? '+' : ''}{monthlyGrowth.toFixed(1)}% this month
           </div>
         </div>
 
@@ -83,8 +125,8 @@ export default function WalletOverview() {
             </div>
             <span className="text-sm text-gray-500">Outstanding Loans</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">KES {safeStats.totalLoans.toLocaleString()}</p>
-          <p className="text-sm text-gray-500 mt-2">{safeStats.totalLoans} active loans</p>
+          <p className="text-2xl font-bold text-gray-900">KES {outstandingLoans.toLocaleString()}</p>
+          <p className="text-sm text-gray-500 mt-2">{activeLoansCount} active loans</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm shadow-black/5 p-6">
@@ -94,7 +136,7 @@ export default function WalletOverview() {
             </div>
             <span className="text-sm text-gray-500">Interest Earned</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">KES 12,500</p>
+          <p className="text-2xl font-bold text-gray-900">KES {interestEarned.toLocaleString()}</p>
           <div className="flex items-center gap-1 mt-2 text-emerald-600 text-sm">
             <TrendingUp className="w-4 h-4" /> From loan interest
           </div>
@@ -118,7 +160,7 @@ export default function WalletOverview() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900">{tx.description}</p>
-                <p className="text-xs text-gray-500">{tx.memberName} • {tx.date}</p>
+                <p className="text-xs text-gray-500">{tx.member_name} • {tx.date}</p>
               </div>
               <p className={`text-sm font-semibold ${
                 tx.type === 'loan_disbursement' || tx.type === 'merry_go_round'

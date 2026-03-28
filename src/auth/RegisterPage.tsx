@@ -6,7 +6,9 @@ import {
   Check, User, Phone, Shield, FileText, Loader2,
   CheckCircle, Circle
 } from 'lucide-react';
+import { toast } from '../components/ui/Toast';
 import AuthLayout from './AuthLayout.tsx';
+import MpesaPaymentModal, { type PaymentResult } from '../payments/MpesaPaymentModal';
 
 interface RegisterPageProps {
   onSwitch: () => void;
@@ -42,6 +44,8 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   const [form, setForm] = useState<FormData>(initialData || {
     name: '',
     email: '',
@@ -152,11 +156,29 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
       
       localStorage.setItem('token', data.access_token);
       await login(form.email, form.password);
+      
+      setRegistrationComplete(true);
+      setShowPaymentModal(true);
+      
+      toast.success('Registration Successful!', 'Welcome to Mama Chama! Your account has been created.');
     } catch (err) {
-      setErrors({ email: err instanceof Error ? err.message : 'Registration failed. Please try again.' });
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      toast.error('Registration Failed', errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    toast.success('Payment Complete!', 'Registration fee paid successfully. Welcome to Mama Chama!');
+    setShowPaymentModal(false);
+    // Optionally redirect to dashboard or show welcome screen
+  };
+
+  const handlePaymentCancel = () => {
+    toast.info('Payment Skipped', 'You can pay the registration fee later from your dashboard.');
+    setShowPaymentModal(false);
+    // Optionally redirect to dashboard
   };
 
   const strength = getPasswordStrength();
@@ -223,7 +245,7 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
                 value={form.name}
                 onChange={(e) => updateField('name', e.target.value)}
                 className={`input-field ${errors.name ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500' : ''}`}
-                placeholder="e.g. Jane Wanjiku Kamau"
+                placeholder="e.g. Stella Wanjiku Kananu"
               />
               {errors.name && <p className="text-xs text-rose-600 mt-1">{errors.name}</p>}
             </div>
@@ -457,6 +479,7 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
               <div className="text-xs text-gray-600 space-y-2">
                 <p>By joining Mama Chama, you agree to:</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Pay a one-time <strong>registration fee of KES 1,000</strong></li>
                   <li>Pay monthly contributions of <strong>KES 5,000</strong> by the 5th of each month</li>
                   <li>Late contributions attract a penalty of <strong>KES 500</strong></li>
                   <li>Absence from meetings attracts a fine of <strong>KES 200</strong></li>
@@ -561,6 +584,17 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
           Sign in
         </button>
       </p>
+
+      {/* M-Pesa Payment Modal for Registration Fee */}
+      <MpesaPaymentModal
+        isOpen={showPaymentModal}
+        onClose={handlePaymentCancel}
+        amount={1000}
+        paymentType="registration_fee"
+        description="One-time registration fee"
+        onSuccess={handlePaymentSuccess}
+        lockedAmount={true}
+      />
     </AuthLayout>
   );
 }

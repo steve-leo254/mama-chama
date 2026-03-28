@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Mail, Loader2, CheckCircle, Send } from 'lucide-react';
 import AuthLayout from './AuthLayout.tsx';
+import { authAPI } from '../services/api.ts';
 
 interface ForgotPasswordPageProps {
   onBack: () => void;
@@ -43,11 +44,12 @@ export default function ForgotPasswordPage({ onBack, onResetPassword }: ForgotPa
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await authAPI.forgotPassword(email);
       setSent(true);
       startCountdown();
-    } catch {
-      setError('Something went wrong. Please try again.');
+      console.log('Password reset email sent to:', email);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -57,8 +59,11 @@ export default function ForgotPasswordPage({ onBack, onResetPassword }: ForgotPa
     if (countdown > 0) return;
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await authAPI.forgotPassword(email);
       startCountdown();
+      console.log('Password reset email resent to:', email);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend reset email. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -190,17 +195,6 @@ export default function ForgotPasswordPage({ onBack, onResetPassword }: ForgotPa
               'Resend Reset Link'
             )}
           </button>
-
-          {/* Demo: skip to reset */}
-          <div className="mt-6 p-4 bg-primary-50 rounded-xl border border-primary-200">
-            <p className="text-xs text-primary-700 mb-2">🔧 Demo Mode</p>
-            <button
-              onClick={onResetPassword}
-              className="text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline"
-            >
-              Skip to Reset Password →
-            </button>
-          </div>
         </div>
       )}
     </AuthLayout>
