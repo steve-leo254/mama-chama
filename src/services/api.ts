@@ -121,6 +121,7 @@ export const authAPI = {
   resetPassword: (token: string, newPassword: string) => apiClient.post<any>('/auth/reset-password', { token, newPassword }),
   setToken: (token: string) => apiClient.setToken(token),
   getToken: () => apiClient.getToken(),
+  getStats: () => apiClient.get<any>('/stats'),
 };
 
 // Members API
@@ -249,6 +250,22 @@ export const notificationsAPI = {
   list: () => apiClient.get<Notification[]>('/notifications'),
   markRead: (id: string) => apiClient.put<any>(`/notifications/${id}/read`),
   markAllRead: () => apiClient.put<any>('/notifications/read-all'),
+};
+
+// Messages API
+export const messagesAPI = {
+  list: (folder?: string) => {
+    const params = folder && folder !== 'all' ? `?folder=${folder}` : '';
+    return apiClient.get<any[]>(`/messages${params}`);
+  },
+  get: (id: string) => apiClient.get<any>(`/messages/${id}`),
+  create: (data: any) => apiClient.post<any>('/messages', data),
+  update: (id: string, data: any) => apiClient.put<any>(`/messages/${id}`, data),
+  markRead: (id: string) => apiClient.put<any>(`/messages/${id}/read`),
+  toggleStar: (id: string) => apiClient.put<any>(`/messages/${id}/star`),
+  archive: (id: string) => apiClient.put<any>(`/messages/${id}/archive`),
+  delete: (id: string) => apiClient.delete<any>(`/messages/${id}`),
+  permanentDelete: (id: string) => apiClient.delete<any>(`/messages/${id}/permanent`),
 };
 
 // Chama Settings API

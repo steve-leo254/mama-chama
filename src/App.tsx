@@ -32,6 +32,9 @@ import ResetPasswordPage from './auth/ResetPasswordPage';
 import TermsPage from './auth/TermsPage';
 import VerifyEmailPage from './auth/VerifyEmailPage';
 
+// Notifications
+import NotificationsPage from './components/notifications/NotificationsPage';
+
 type AuthView = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'terms' | 'verify-email';
 
 function AppContent() {
@@ -119,6 +122,7 @@ function AppContent() {
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/merry-go-round" element={<MerryGoRound />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Dashboard />} />
           </Route>
@@ -130,6 +134,7 @@ function AppContent() {
             <Route path="/member/group-reports" element={<MemberGroupReportsPage />} />
             <Route path="/member/my-reports" element={<MemberMyReportsPage />} />
             <Route path="/member/my-loans" element={<MemberMyLoansPage />} />
+            <Route path="/member/notifications" element={<NotificationsPage />} />
             <Route path="/member/profile" element={<MemberProfilePage />} />
             <Route path="*" element={<MemberDashboardPage />} />
           </Route>

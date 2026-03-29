@@ -2,7 +2,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Wallet, HandCoins, CalendarDays,
-  RefreshCw, Settings, LogOut, PiggyBank
+  RefreshCw, Settings, Bell, LogOut, PiggyBank
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.tsx';
 
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/merry-go-round', icon: RefreshCw, label: 'Merry-Go-Round' },
   { to: '/wallet', icon: Wallet, label: 'Wallet' },
   { to: '/meetings', icon: CalendarDays, label: 'Meetings' },
+  { to: '/notifications', icon: Bell, label: 'Notifications' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

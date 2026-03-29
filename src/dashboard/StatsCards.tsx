@@ -7,7 +7,7 @@ export default function StatsCards() {
 
   // Provide default values to prevent undefined errors
   const safeStats = {
-    availableFunds: stats?.availableFunds || 0,
+    availableFunds: stats?.availableBalance || 0,
     totalContributions: stats?.totalContributions || 0,
     totalLoans: stats?.totalLoans || 0,
     pendingLoanApplications: stats?.pendingLoanApplications || 0,

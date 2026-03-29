@@ -4,9 +4,10 @@ import type { ReactNode } from 'react';
 import type {
   Member, Contribution, Loan, Meeting, MerryGoRoundCycle,
   Transaction, Fine, DepositRecord,
-  WithdrawRequest, LoanRepaymentRecord, MemberStats, Notification
+  WithdrawRequest, LoanRepaymentRecord, MemberStats, Notification,
+  Message, MessageFolder
 } from '../types';
-import { authAPI, membersAPI, contributionsAPI, loansAPI, finesAPI, depositsAPI, transactionsAPI, withdrawRequestsAPI, loanRepaymentsAPI, merryGoRoundAPI, meetingsAPI, notificationsAPI } from '../services/api';
+import { authAPI, membersAPI, contributionsAPI, loansAPI, finesAPI, depositsAPI, transactionsAPI, withdrawRequestsAPI, loanRepaymentsAPI, merryGoRoundAPI, meetingsAPI, notificationsAPI, messagesAPI } from '../services/api';
 
 // Initial empty state - will be populated from API
 const initialState: {
@@ -17,6 +18,7 @@ const initialState: {
   merryGoRoundCycles: MerryGoRoundCycle[];
   transactions: Transaction[];
   notifications: Notification[];
+  messages: Message[];
   fines: Fine[];
   deposits: DepositRecord[];
   withdrawRequests: WithdrawRequest[];
@@ -28,7 +30,7 @@ const initialState: {
     totalLoans: number;
     pendingLoanApplications: number;
     monthlyContributions: number;
-    availableFunds: number;
+    availableBalance: number;
     totalFines: number;
     monthlyCollected: number;
     monthlyTarget: number;
@@ -42,6 +44,7 @@ const initialState: {
   merryGoRoundCycles: [],
   transactions: [],
   notifications: [],
+  messages: [],
   fines: [],
   deposits: [],
   withdrawRequests: [],
@@ -53,7 +56,7 @@ const initialState: {
     totalLoans: 0,
     pendingLoanApplications: 0,
     monthlyContributions: 0,
-    availableFunds: 0,
+    availableBalance: 0,
     totalFines: 0,
     monthlyCollected: 0,
     monthlyTarget: 10000,
@@ -105,7 +108,17 @@ interface AppContextType {
   getMemberWithdrawals: (memberId: string) => WithdrawRequest[];
   getMemberLoanRepayments: (memberId: string) => LoanRepaymentRecord[];
   getMemberNotifications: (memberId: string) => Notification[];
+  getMyMessages: (folder: MessageFolder) => Message[];
+  getAllChatMessages: () => Message[];
+  toggleReadMessage: (messageId: string) => void;
+  unreadMessageCount: number;
   setCurrentUser: (user: Member | null) => void;
+  sendMessage: (message: any) => void;
+  replyToMessage: (messageId: string, content: string) => void;
+  toggleStarMessage: (messageId: string) => void;
+  archiveMessage: (messageId: string) => void;
+  deleteMessage: (messageId: string) => void;
+  permanentDeleteMessage: (messageId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -153,7 +166,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const [members, contributions, loans, fines, deposits, transactions, withdrawRequests, merryGoRoundCycles, meetings, notifications] = await Promise.all([
+      const [members, contributions, loans, fines, deposits, transactions, withdrawRequests, merryGoRoundCycles, meetings, notifications, messages, stats] = await Promise.all([
         membersAPI.list(),
         contributionsAPI.list(),
         loansAPI.list(),
@@ -164,6 +177,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         merryGoRoundAPI.list(),
         meetingsAPI.list(),
         notificationsAPI.list(),
+        messagesAPI.list(), // Add messages API call
+        authAPI.getStats(), // Add stats API call
       ]);
 
       updateData({
@@ -177,25 +192,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         merryGoRoundCycles,
         meetings,
         notifications,
+        messages, // Include messages in state update
         stats: {
-          totalMembers: members.length,
-          activeMembers: members.filter(m => m.status === 'active').length,
-          totalContributions: contributions.reduce((sum, c) => sum + c.amount, 0),
-          totalLoans: loans.length,
+          totalMembers: stats.total_members,
+          activeMembers: stats.active_members,
+          totalContributions: stats.total_contributions,
+          totalLoans: stats.total_loans_amount,
           pendingLoanApplications: loans.filter(l => l.status === 'pending').length,
-          monthlyContributions: contributions
-            .filter(c => c.status === 'completed')
-            .reduce((sum, c) => sum + c.amount, 0),
-          availableFunds: contributions
-            .filter(c => c.status === 'completed')
-            .reduce((sum, c) => sum + c.amount, 0) - loans
-            .filter(l => l.status === 'active')
-            .reduce((sum, l) => sum + (l.total_repayable - l.amount_paid), 0),
-          totalFines: fines.reduce((sum, f) => sum + f.amount, 0),
-          monthlyCollected: contributions
-            .filter(c => c.status === 'completed')
-            .reduce((sum, c) => sum + c.amount, 0),
-          monthlyTarget: 10000,
+          monthlyContributions: stats.monthly_collected,
+          availableBalance: stats.available_balance,
+          totalFines: stats.total_fines_unpaid,
+          monthlyCollected: stats.monthly_collected,
+          monthlyTarget: stats.monthly_target,
           transactions,
         }
       });
@@ -501,12 +509,174 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const unreadNotifications = data.notifications.filter(n => !n.read).length;
 
+  // Message handling functions
+  const sendMessage = async (message: any) => {
+    try {
+      // Only send the required fields for MessageCreate, not the full Message object
+      const messageCreateData = {
+        to_ids: message.to_ids || (message.to ? message.to.map((t: any) => t.id) : []),
+        subject: message.subject,
+        body: message.body,
+        category: message.category || 'personal',
+        priority: message.priority || 'normal',
+        labels: message.labels || []
+      };
+      
+      const newMessage = await messagesAPI.create(messageCreateData);
+      // Update local state with the new message
+      updateData({ 
+        messages: [newMessage, ...data.messages]
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send message');
+    }
+  };
+
+  // Reply to message function
+  const replyToMessage = async (messageId: string, content: string) => {
+    try {
+      // Find the original message
+      const originalMessage = data.messages.find(msg => msg.id === messageId);
+      if (!originalMessage) {
+        throw new Error('Original message not found');
+      }
+
+      // Create reply message data
+      const replyData = {
+        to_ids: originalMessage.from?.id ? [originalMessage.from.id] : [],
+        subject: originalMessage.subject.startsWith('Re: ') ? originalMessage.subject : `Re: ${originalMessage.subject}`,
+        body: content,
+        category: 'personal',
+        priority: 'normal',
+        labels: [],
+        reply_to: messageId // Include reference to original message
+      };
+      
+      const newMessage = await messagesAPI.create(replyData);
+      // Update local state with the new message
+      updateData({ 
+        messages: [newMessage, ...data.messages]
+      });
+    } catch (err) {
+      console.error('Failed to reply to message:', err);
+      setError(err instanceof Error ? err.message : 'Failed to reply to message');
+    }
+  };
+
+  // Message management functions
+  const toggleStarMessage = async (messageId: string) => {
+    try {
+      await messagesAPI.toggleStar(messageId);
+      // Update local state - handle undefined case
+      updateData({
+        messages: data.messages.map(msg => 
+          msg.id === messageId ? { ...msg, starred: msg.starred === undefined ? true : !msg.starred } : msg
+        )
+      });
+    } catch (err) {
+      console.error('Failed to toggle star:', err);
+      // Fallback: just update local state - handle undefined case
+      updateData({
+        messages: data.messages.map(msg => 
+          msg.id === messageId ? { ...msg, starred: msg.starred === undefined ? true : !msg.starred } : msg
+        )
+      });
+    }
+  };
+
+  const archiveMessage = async (messageId: string) => {
+    try {
+      await messagesAPI.archive(messageId);
+      // Update local state
+      updateData({
+        messages: data.messages.map(msg => 
+          msg.id === messageId ? { ...msg, folder: 'archive' as MessageFolder } : msg
+        )
+      });
+    } catch (err) {
+      console.error('Failed to archive message:', err);
+      // Fallback: just update local state
+      updateData({
+        messages: data.messages.map(msg => 
+          msg.id === messageId ? { ...msg, folder: 'archive' as MessageFolder } : msg
+        )
+      });
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    try {
+      await messagesAPI.delete(messageId);
+      // Update local state
+      updateData({
+        messages: data.messages.filter(msg => msg.id !== messageId)
+      });
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+      // Fallback: just update local state
+      updateData({
+        messages: data.messages.filter(msg => msg.id !== messageId)
+      });
+    }
+  };
+
+  // Message functions
+  const getMyMessages = (folder: MessageFolder): Message[] => {
+    // Special handling for starred folder - return all starred messages regardless of their actual folder
+    if (folder === 'starred') {
+      return data.messages.filter(msg => msg.starred === true);
+    }
+    // Filter messages from the state based on folder
+    return data.messages.filter(msg => msg.folder === folder);
+  };
+
+  // New function to get all messages for chat (both inbox and sent)
+  const getAllChatMessages = (): Message[] => {
+    return data.messages.filter(msg => msg.folder === 'inbox' || msg.folder === 'sent');
+  };
+
+  const toggleReadMessage = async (messageId: string) => {
+    try {
+      await messagesAPI.markRead(messageId);
+      // Update local state
+      updateData({
+        messages: data.messages.map(msg => 
+          msg.id === messageId ? { ...msg, read: !msg.read } : msg
+        )
+      });
+    } catch (err) {
+      console.error('Failed to toggle message read status:', err);
+      // Fallback: just update local state
+      updateData({
+        messages: data.messages.map(msg => 
+          msg.id === messageId ? { ...msg, read: !msg.read } : msg
+        )
+      });
+    }
+  };
+
+  const unreadMessageCount = data.messages.filter((m: Message) => !m.read && m.folder === 'inbox').length;
+
   // Load data when authenticated
   useEffect(() => {
     if (isAuthenticated && !dataLoading) {
       refreshData();
     }
   }, [isAuthenticated]);
+
+  const permanentDeleteMessage = async (messageId: string) => {
+    try {
+      await messagesAPI.permanentDelete(messageId);
+      // Update local state - remove the message completely
+      updateData({
+        messages: data.messages.filter(msg => msg.id !== messageId)
+      });
+    } catch (err) {
+      console.error('Failed to permanently delete message:', err);
+      setError(err instanceof Error ? err.message : 'Failed to permanently delete message');
+    }
+  };
 
   const value: AppContextType = {
     ...data,
@@ -541,7 +711,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getMemberWithdrawals,
     getMemberLoanRepayments,
     getMemberNotifications,
+    getMyMessages,
+    getAllChatMessages,
+    toggleReadMessage,
+    unreadMessageCount,
     setCurrentUser,
+    sendMessage,
+    replyToMessage,
+    toggleStarMessage,
+    archiveMessage,
+    deleteMessage,
+    permanentDeleteMessage,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

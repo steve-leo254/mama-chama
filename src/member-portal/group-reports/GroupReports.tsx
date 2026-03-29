@@ -25,7 +25,7 @@ export default function GroupReports() {
   const balanceData = [
     { name: 'Savings', value: stats.totalContributions, color: '#10b981' },
     { name: 'Loans Out', value: stats.totalLoans, color: '#f59e0b' },
-    { name: 'Available', value: stats.availableFunds, color: '#3b82f6' },
+    { name: 'Available', value: stats.availableBalance, color: '#3b82f6' },
   ];
 
   // Monthly collection data
@@ -91,7 +91,7 @@ export default function GroupReports() {
                 <Wallet className="w-5 h-5 text-primary-600" />
                 <span className="text-sm text-primary-700">Available Balance</span>
               </div>
-              <p className="text-2xl font-bold text-primary-900">KES {stats.availableFunds.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary-900">KES {stats.availableBalance.toLocaleString()}</p>
             </div>
             <div className="card bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
               <div className="flex items-center gap-2 mb-2">

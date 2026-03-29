@@ -2,7 +2,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, BarChart3,
-  FileText, HandCoins, User, LogOut
+  FileText, HandCoins, User, Bell, LogOut
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/member/group-reports', icon: BarChart3, label: 'Group Reports' },
   { to: '/member/my-reports', icon: FileText, label: 'My Reports' },
   { to: '/member/my-loans', icon: HandCoins, label: 'My Loans' },
+  { to: '/member/notifications', icon: Bell, label: 'My Notifications' },
   { to: '/member/profile', icon: User, label: 'My Profile' },
 ];
 

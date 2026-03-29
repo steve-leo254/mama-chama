@@ -1,11 +1,13 @@
 // src/components/member-portal/MemberHeader.tsx
 import { Bell, Search, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export default function MemberHeader() {
   const { currentUser, getMemberNotifications, markNotificationRead, clearAllNotifications } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
 
   const myNotifications = currentUser ? getMemberNotifications(currentUser.id) : [];
   const unread = myNotifications.filter(n => !n.read).length;
@@ -44,7 +46,15 @@ export default function MemberHeader() {
                 <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
                 <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-20 overflow-hidden animate-slide-up">
                   <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900">My Notifications</h3>
+                    <button 
+                      onClick={() => {
+                        navigate('/member/notifications');
+                        setShowNotifications(false);
+                      }}
+                      className="font-semibold text-gray-900 hover:text-emerald-600 transition-colors"
+                    >
+                      My Notifications
+                    </button>
                     {unread > 0 && (
                       <button
                         onClick={() => clearAllNotifications()}

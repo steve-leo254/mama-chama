@@ -145,7 +145,6 @@ export interface ChamaStats {
   totalLoansAmount: number;
   availableBalance: number;
   monthlyTarget: number;
-  monthlyCollected: number;
   nextMeeting: string;
   totalFinesCollected: number;
   totalSavings: number;
@@ -183,4 +182,61 @@ export interface Notification {
   date: string;
   read: boolean;
   memberId?: string;
+}
+
+export interface MessageAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
+export type MessageFolder = 'inbox' | 'sent' | 'drafts' | 'trash' | 'starred' | 'archive';
+
+export interface Message {
+  id: string;
+  from_user?: {
+    id: string;
+    name: string;
+    avatar: string;
+    role: string;
+  };
+  from?: {
+    id: string;
+    name: string;
+    avatar: string;
+    role: string;
+  };
+  to_users?: Array<{
+    id: string;
+    name: string;
+  }>;
+  to?: Array<{
+    id: string;
+    name: string;
+  }>;
+  subject: string;
+  body: string;
+  date: string;
+  time: string;
+  preview: string;
+  folder: MessageFolder;
+  labels: string[];
+  attachments: MessageAttachment[];
+  category: 'personal' | 'official' | 'announcement' | 'reminder';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  read?: boolean;
+  starred?: boolean;
+  replies: Array<{
+    id: string;
+    from: {
+      id: string;
+      name: string;
+      avatar: string;
+    };
+    body: string;
+    date: string;
+    time: string;
+    attachments: MessageAttachment[];
+  }>;
 }
