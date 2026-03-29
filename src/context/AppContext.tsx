@@ -522,6 +522,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         labels: message.labels || []
       };
       
+      console.log('Sending message data:', messageCreateData); // Debug log
+      
       const newMessage = await messagesAPI.create(messageCreateData);
       // Update local state with the new message
       updateData({ 
@@ -529,7 +531,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
     } catch (err) {
       console.error('Failed to send message:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Error details:', errorMessage);
+      // Try to parse the error if it's a JSON string
+      try {
+        const parsedError = JSON.parse(errorMessage);
+        console.error('Parsed error:', parsedError);
+        setError(parsedError.detail || parsedError.message || errorMessage);
+      } catch {
+        setError(errorMessage);
+      }
     }
   };
 

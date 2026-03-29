@@ -16,8 +16,8 @@ const FOLDERS = [
   { id: 'inbox' as MessageFolder, label: 'Inbox', icon: Inbox, color: 'text-primary-600' },
   { id: 'sent' as MessageFolder, label: 'Sent', icon: Send, color: 'text-emerald-600' },
   { id: 'starred' as MessageFolder, label: 'Starred', icon: Star, color: 'text-amber-500' },
-  { id: 'archive' as MessageFolder, label: 'Archive', icon: Archive, color: 'text-gray-500' },
-  { id: 'trash' as MessageFolder, label: 'Trash', icon: Trash2, color: 'text-rose-500' },
+  { id: 'trash' as MessageFolder, label: 'Trash', icon: Trash2, color: 'text-red-600' },
+  { id: 'archive' as MessageFolder, label: 'Archive', icon: Archive, color: 'text-gray-600' },
 ];
 
 const CATEGORIES = [
@@ -36,6 +36,7 @@ export default function NotificationsPage() {
   const [activeFolder, setActiveFolder] = useState<MessageFolder>('inbox');
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showCompose, setShowCompose] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
@@ -44,6 +45,13 @@ export default function NotificationsPage() {
 
   const isAdmin = portalMode === 'admin';
   const messages = getMyMessages(activeFolder);
+
+  // Debug logging
+  console.log('=== NOTIFICATIONS DEBUG ===');
+  console.log('Active folder:', activeFolder);
+  console.log('Category filter:', categoryFilter);
+  console.log('Raw messages count:', messages.length);
+  console.log('Raw messages:', messages.map(m => ({ id: m.id, subject: m.subject, category: m.category, folder: m.folder })));
 
   const filteredMessages = useMemo(() => {
     let filtered = messages;
@@ -136,7 +144,7 @@ export default function NotificationsPage() {
         </div>
         <div className="flex gap-2">
           {isAdmin && viewMode === 'messages' && (
-            <button className="btn-secondary flex items-center gap-2 text-sm">
+            <button onClick={() => setShowAnnouncement(true)} className="btn-secondary flex items-center gap-2 text-sm">
               <Bell className="w-4 h-4" /> Send Announcement
             </button>
           )}
@@ -290,7 +298,7 @@ export default function NotificationsPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   {isAdmin && (
-                    <button className="btn-secondary flex items-center gap-2">
+                    <button onClick={() => setShowAnnouncement(true)} className="btn-secondary flex items-center gap-2">
                       <Bell className="w-4 h-4" /> Send Announcement
                     </button>
                   )}
@@ -316,6 +324,15 @@ export default function NotificationsPage() {
         <ComposeMessage
           onClose={() => setShowCompose(false)}
           replyTo={null}
+        />
+      )}
+
+      {/* Announcement Modal */}
+      {showAnnouncement && (
+        <ComposeMessage
+          onClose={() => setShowAnnouncement(false)}
+          replyTo={null}
+          announcement={true}
         />
       )}
     </div>

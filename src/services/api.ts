@@ -58,7 +58,10 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+      console.error('API Error Response:', error);
+      console.error('Response status:', response.status);
+      console.error('Response text:', await response.text().catch(() => 'Could not read response text'));
+      throw new Error(error.detail || error.message || JSON.stringify(error) || `HTTP error! status: ${response.status}`);
     }
 
     return response.json();
