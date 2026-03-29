@@ -26,7 +26,7 @@ export default function AuthLayout({
     <div 
       className="min-h-screen flex items-center justify-center p-4 relative"
       style={{
-        backgroundImage: 'linear-gradient(to bottom right, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.9), rgba(236, 253, 245, 0.9)), url(/man-on-mobile-jacaranda.jpg)',
+        backgroundImage: 'url(/chama-people.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
