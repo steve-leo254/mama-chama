@@ -1,15 +1,20 @@
 // src/components/layout/Header.tsx
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function Header() {
-  const { notifications, unreadNotifications, markNotificationRead } = useApp();
+  const { notifications, unreadNotifications, markNotificationRead, clearAllNotifications } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
   // Show only active (unread) notifications, limited to 3 most recent
   const activeNotifications = notifications.filter(n => !n.read).slice(0, 3);
+
+  const handleClearAll = async () => {
+    await clearAllNotifications();
+    setShowNotifications(false);
+  };
 
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-gray-100">
@@ -59,32 +64,48 @@ export default function Header() {
 
             {showNotifications && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)} />
-                <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-20 overflow-hidden animate-slide-up">
-                  <div className="p-4 border-b border-gray-100">
+                <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)} />
+                <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-40 overflow-hidden animate-slide-up">
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
+                    {unreadNotifications > 0 && (
+                      <button
+                        onClick={handleClearAll}
+                        className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        Clear all
+                      </button>
+                    )}
                   </div>
                   <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
-                    {activeNotifications.map((notif) => (
-                      <button
-                        key={notif.id}
-                        onClick={() => markNotificationRead(notif.id)}
-                        className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${!notif.read ? 'bg-primary-50/50' : ''}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
-                            notif.type === 'success' ? 'bg-emerald-500' :
-                            notif.type === 'warning' ? 'bg-amber-500' :
-                            notif.type === 'error' ? 'bg-rose-500' : 'bg-primary-500'
-                          }`} />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{notif.title}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{notif.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">{notif.date}</p>
+                    {activeNotifications.length > 0 ? (
+                      activeNotifications.map((notif) => (
+                        <button
+                          key={notif.id}
+                          onClick={() => markNotificationRead(notif.id)}
+                          className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${!notif.read ? 'bg-primary-50/50' : ''}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
+                              notif.type === 'success' ? 'bg-emerald-500' :
+                              notif.type === 'warning' ? 'bg-amber-500' :
+                              notif.type === 'error' ? 'bg-rose-500' : 'bg-primary-500'
+                            }`} />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{notif.title}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{notif.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">{notif.date}</p>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center">
+                        <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">No new notifications</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>

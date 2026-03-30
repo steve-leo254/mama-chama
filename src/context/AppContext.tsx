@@ -533,17 +533,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Message handling functions
   const sendMessage = async (message: any) => {
     try {
-      // Only send the required fields for MessageCreate, not the full Message object
+      // Validate required fields
+      if (!message.to_ids || message.to_ids.length === 0) {
+        throw new Error('Recipients are required');
+      }
+      
+      if (!message.subject || message.subject.trim().length === 0) {
+        throw new Error('Subject is required');
+      }
+      
+      if (!message.body || message.body.trim().length === 0) {
+        throw new Error('Message body is required');
+      }
+      
+      // Validate enum values
+      const validCategories = ['personal', 'official', 'announcement', 'financial'];
+      const validPriorities = ['low', 'normal', 'high'];
+      
+      const category = message.category || 'personal';
+      const priority = message.priority || 'normal';
+      
+      if (!validCategories.includes(category)) {
+        throw new Error(`Invalid category: ${category}. Valid values: ${validCategories.join(', ')}`);
+      }
+      
+      if (!validPriorities.includes(priority)) {
+        throw new Error(`Invalid priority: ${priority}. Valid values: ${validPriorities.join(', ')}`);
+      }
+      
+      // Only send the required fields for MessageCreate schema
       const messageCreateData = {
-        to_ids: message.to_ids || (message.to ? message.to.map((t: any) => t.id) : []),
-        subject: message.subject,
-        body: message.body,
-        category: message.category || 'personal',
-        priority: message.priority || 'normal',
+        to_ids: message.to_ids,
+        subject: message.subject.trim(),
+        body: message.body.trim(),
+        category: category,
+        priority: priority,
         labels: message.labels || []
       };
       
-      console.log('Sending message data:', messageCreateData); // Debug log
+      console.log('Sending message data:', JSON.stringify(messageCreateData, null, 2)); // Debug log
       
       const newMessage = await messagesAPI.create(messageCreateData);
       // Update local state with the new message

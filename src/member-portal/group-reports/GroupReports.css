@@ -1,0 +1,110 @@
+/* Print styles for GroupReports */
+@media print {
+  /* Hide unnecessary elements */
+  .btn-secondary,
+  button,
+  .flex.gap-2 {
+    display: none !important;
+  }
+
+  /* Ensure the reports content takes full width */
+  #reports-content {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Remove backgrounds and shadows for printing */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure proper text formatting */
+  body {
+    font-size: 12px;
+    line-height: 1.4;
+    color: black;
+    background: white;
+  }
+
+  /* Table styles for printing */
+  table {
+    width: 100% !important;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid #e5e7eb !important;
+    padding: 8px !important;
+  }
+
+  th {
+    background: #f9fafb !important;
+    font-weight: bold;
+  }
+
+  /* Chart container adjustments */
+  .recharts-wrapper {
+    page-break-inside: avoid;
+  }
+
+  /* Avoid breaking cards across pages */
+  .grid > div {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure proper spacing */
+  .space-y-6 > * {
+    margin-bottom: 1rem;
+  }
+
+  /* Tab navigation should be hidden in print */
+  .flex.gap-2.mb-6 {
+    display: none !important;
+  }
+
+  /* Print-friendly colors */
+  .text-emerald-600,
+  .text-emerald-700,
+  .text-emerald-900 {
+    color: black !important;
+  }
+
+  .text-amber-600,
+  .text-amber-700,
+  .text-amber-900 {
+    color: black !important;
+  }
+
+  .text-rose-600,
+  .text-rose-700,
+  .text-rose-900 {
+    color: black !important;
+  }
+
+  .text-primary-600,
+  .text-primary-700,
+  .text-primary-900 {
+    color: black !important;
+  }
+
+  .text-purple-600,
+  .text-purple-700,
+  .text-purple-900 {
+    color: black !important;
+  }
+
+  /* Hide hover effects */
+  .hover\:bg-gray-50\/50:hover {
+    background-color: transparent !important;
+  }
+
+  /* Ensure badges are visible in print */
+  .badge {
+    border: 1px solid #e5e7eb !important;
+    background: white !important;
+    color: black !important;
+  }
+}

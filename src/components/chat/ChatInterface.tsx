@@ -27,7 +27,7 @@ export default function ChatInterface({ member, onClose }: ChatInterfaceProps) {
       (msg.from.id === currentUser?.id && msg.to.some((to: any) => to.id === member.id)))
     );
     setMessages(chatMessages.sort((a: Message, b: Message) => 
-      new Date(`${a.date} ${a.time}`).getTime() - new Date(`${b.date} ${b.time}`).getTime()
+      new Date(`${b.date} ${b.time}`).getTime() - new Date(`${a.date} ${a.time}`).getTime()
     ));
   }, [member, currentUser, getAllChatMessages]);
 

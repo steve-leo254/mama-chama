@@ -1,9 +1,12 @@
-// src/components/chat/ChatList.tsx
+// src/components/member-portal/MemberChat.tsx
 import { useState, useMemo } from 'react';
-import { useApp } from '../../context/AppContext';
-import { Search, MessageCircle, Users, Inbox, Send, Star, Archive, Trash2, PenSquare, SlidersHorizontal, X, MailOpen, ChevronLeft } from 'lucide-react';
-import ChatInterface from './ChatInterface';
-import type { Member, Message, MessageFolder } from '../../types';
+import { useApp } from '../context/AppContext';
+import ChatInterface from '../components/chat/ChatInterface';
+import {
+  MessageCircle, PenSquare, Search, X, Users,
+  Filter, MessageSquare, CheckCheck, Inbox, Send, Star, Archive, Trash2, ChevronLeft, MailOpen
+} from 'lucide-react';
+import type { Member, Message, MessageFolder } from '../types';
 
 const FOLDERS = [
   { id: 'inbox' as MessageFolder, label: 'Inbox', icon: Inbox, color: 'text-primary-600' },
@@ -13,9 +16,10 @@ const FOLDERS = [
   { id: 'archive' as MessageFolder, label: 'Archive', icon: Archive, color: 'text-gray-600' },
 ];
 
-export default function ChatList() {
+export default function MemberChat() {
   const { members, currentUser, getAllChatMessages, getMyMessages, unreadMessageCount, toggleReadMessage } = useApp();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [showCompose, setShowCompose] = useState(false);
   const [search, setSearch] = useState('');
   const [activeFolder, setActiveFolder] = useState<MessageFolder>('inbox');
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -33,17 +37,15 @@ export default function ChatList() {
   // Get messages for current folder
   const messages = getMyMessages(activeFolder);
 
-  // Filter members based on search
-  const filteredMembers = useMemo(() => {
-    if (!search) return availableMembers;
-    const searchLower = search.toLowerCase();
-    return availableMembers.filter(member =>
-      member.name.toLowerCase().includes(searchLower) ||
-      member.email.toLowerCase().includes(searchLower)
+  // Get all chat messages for filtering
+  const allChatMessages = useMemo(() => {
+    return getAllChatMessages().filter((msg: Message) => 
+      msg.from && msg.from.id && msg.to &&
+      (msg.from.id === currentUser?.id || msg.to.some((to: any) => to.id === currentUser?.id))
     );
-  }, [availableMembers, search]);
+  }, [getAllChatMessages, currentUser]);
 
-  // Filter messages based on search
+  // Filter messages by search
   const filteredMessages = useMemo(() => {
     let filtered = messages;
     if (search) {
@@ -57,28 +59,6 @@ export default function ChatList() {
     return filtered.sort((a, b) => new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime());
   }, [messages, search]);
 
-  // Get last message for each member
-  const getLastMessage = (memberId: string) => {
-    const allMessages = getAllChatMessages();
-    const chatMessages = allMessages.filter((msg: Message) => 
-      msg.from && msg.from.id && msg.to &&
-      ((msg.from.id === memberId && msg.to.some((to: any) => to.id === currentUser?.id)) ||
-      (msg.from.id === currentUser?.id && msg.to.some((to: any) => to.id === memberId)))
-    );
-    return chatMessages.sort((a: Message, b: Message) => 
-      new Date(`${b.date} ${b.time}`).getTime() - new Date(`${a.date} ${a.time}`).getTime()
-    )[0];
-  };
-
-  const getUnreadCount = (memberId: string) => {
-    const allMessages = getAllChatMessages();
-    return allMessages.filter((msg: Message) => 
-      msg.from && msg.from.id === memberId && msg.to &&
-      msg.to.some((to: any) => to.id === currentUser?.id) && 
-      !msg.read
-    ).length;
-  };
-
   // Folder counts
   const folderCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -89,32 +69,92 @@ export default function ChatList() {
     return counts;
   }, [getMyMessages]);
 
-  const handleSelectMessage = (msg: Message) => {
-    setSelectedMessage(msg);
-    setShowMobileList(false);
-    if (!msg.read) toggleReadMessage(msg.id);
+  // Get unique members from filtered messages
+  const chatMembers = useMemo(() => {
+    const memberIds = new Set<string>();
+    filteredMessages.forEach((msg: Message) => {
+      if (msg.from && msg.from.id !== currentUser?.id) {
+        memberIds.add(msg.from.id);
+      }
+      if (msg.to) {
+        msg.to.forEach((to: any) => {
+          if (to.id !== currentUser?.id) {
+            memberIds.add(to.id);
+          }
+        });
+      }
+    });
+    
+    return availableMembers.filter(member => memberIds.has(member.id));
+  }, [filteredMessages, availableMembers, currentUser]);
+
+  // Get last message for each member
+  const getLastMessage = (memberId: string) => {
+    const memberMessages = allChatMessages.filter((msg: Message) => 
+      (msg.from && msg.from.id === memberId && msg.to && msg.to.some((to: any) => to.id === currentUser?.id)) ||
+      (msg.from && msg.from.id === currentUser?.id && msg.to && msg.to.some((to: any) => to.id === memberId))
+    );
+    return memberMessages.sort((a: Message, b: Message) => 
+      new Date(`${b.date} ${b.time}`).getTime() - new Date(`${a.date} ${a.time}`).getTime()
+    )[0];
   };
 
-  const handleBack = () => {
-    setSelectedMessage(null);
-    setShowMobileList(true);
+  // Get unread count for each member
+  const getUnreadCount = (memberId: string) => {
+    return allChatMessages.filter((msg: Message) => 
+      msg.from && msg.from.id === memberId && msg.to &&
+      msg.to.some((to: any) => to.id === currentUser?.id) && 
+      !msg.read
+    ).length;
   };
 
   const handleSelectMember = (member: Member) => {
     setSelectedMember(member);
+    setShowMobileList(false);
   };
 
   const handleBackToMembers = () => {
     setSelectedMember(null);
   };
 
+  const handleSelectMessage = (msg: Message) => {
+    setSelectedMessage(msg);
+    setShowMobileList(false);
+    if (!msg.read) toggleReadMessage(msg.id);
+  };
+
+  const handleBackToMessages = () => {
+    setSelectedMessage(null);
+    setShowMobileList(true);
+  };
+
   if (selectedMember) {
     return (
-      <div className="h-full flex">
-        <ChatInterface 
-          member={selectedMember} 
-          onClose={handleBackToMembers} 
-        />
+      <div className="animate-fade-in">
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={handleBackToMembers}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+              <span className="text-lg">{selectedMember.avatar || '👤'}</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{selectedMember.name}</h2>
+              <p className="text-sm text-emerald-600">Active now</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="h-[calc(100vh-200px)]">
+          <ChatInterface 
+            member={selectedMember} 
+            onClose={() => setSelectedMember(null)} 
+          />
+        </div>
       </div>
     );
   }
@@ -126,7 +166,7 @@ export default function ChatList() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <MessageCircle className="w-7 h-7 text-primary-600" />
+              <MessageCircle className="w-7 h-7 text-emerald-600" />
               Member Chat
             </h2>
             {/* View Mode Toggle */}
@@ -163,7 +203,7 @@ export default function ChatList() {
         </div>
         <div className="flex gap-2">
           {viewMode === 'folders' && (
-            <button className="btn-primary flex items-center gap-2">
+            <button onClick={() => setShowCompose(true)} className="btn-primary flex items-center gap-2">
               <PenSquare className="w-4 h-4" /> Compose
             </button>
           )}
@@ -184,7 +224,7 @@ export default function ChatList() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search members..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:bg-white transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all"
                 />
                 {search && (
                   <button 
@@ -199,7 +239,7 @@ export default function ChatList() {
 
             {/* Members List */}
             <div className="flex-1 overflow-y-auto">
-              {filteredMembers.length === 0 ? (
+              {chatMembers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
                   <Users className="w-12 h-12 text-gray-300 mb-3" />
                   <h3 className="text-lg font-medium text-gray-900 mb-1">
@@ -214,7 +254,7 @@ export default function ChatList() {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {filteredMembers.map(member => {
+                  {chatMembers.map((member) => {
                     const lastMessage = getLastMessage(member.id);
                     const unreadCount = getUnreadCount(member.id);
                     
@@ -222,46 +262,49 @@ export default function ChatList() {
                       <button
                         key={member.id}
                         onClick={() => handleSelectMember(member)}
-                        className="w-full p-4 hover:bg-gray-50 transition-colors flex items-center gap-3 text-left group"
+                        className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
                       >
-                        <div className="relative">
-                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span className="text-lg font-semibold text-gray-600">
-                              {member.avatar}
-                            </span>
-                          </div>
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                          {unreadCount > 0 && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                              {unreadCount > 9 ? '9+' : unreadCount}
+                        <div className="flex items-center gap-3">
+                          {/* Avatar */}
+                          <div className="relative">
+                            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                              <span className="text-lg">{member.avatar || '👤'}</span>
                             </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold text-gray-900 truncate">
-                              {member.name}
-                            </h3>
-                            {lastMessage && (
-                              <span className="text-xs text-gray-500">
-                                {lastMessage.time}
+                            {unreadCount > 0 && (
+                              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                                {unreadCount > 9 ? '9+' : unreadCount}
                               </span>
                             )}
                           </div>
                           
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600 truncate">
-                              {lastMessage 
-                                ? lastMessage.preview 
-                                : `Start conversation with ${member.name.split(' ')[0]}`
-                              }
-                            </p>
-                            {member.role && (
-                              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
-                                {member.role}
+                          {/* Member Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <h4 className="font-semibold text-gray-900 truncate">
+                                {member.name}
+                              </h4>
+                              {lastMessage && (
+                                <span className="text-xs text-gray-500">
+                                  {lastMessage.date}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm text-gray-600 truncate">
+                                {lastMessage 
+                                  ? lastMessage.preview || lastMessage.subject
+                                  : 'Start a conversation...'
+                                }
+                              </p>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                member.status === 'active' 
+                                  ? 'bg-emerald-100 text-emerald-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {member.status}
                               </span>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </button>
@@ -286,7 +329,8 @@ export default function ChatList() {
               <div className="card p-2 h-full overflow-y-auto">
                 {/* Compose Button (Desktop) */}
                 <button
-                  className="hidden lg:flex w-full items-center justify-center gap-2 mb-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-semibold shadow-lg shadow-primary-500/25 hover:from-primary-700 hover:to-primary-800 transition-all active:scale-[0.98]"
+                  onClick={() => setShowCompose(true)}
+                  className="hidden lg:flex w-full items-center justify-center gap-2 mb-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl font-semibold shadow-lg shadow-emerald-500/25 hover:from-emerald-700 hover:to-emerald-800 transition-all active:scale-[0.98]"
                 >
                   <PenSquare className="w-5 h-5" /> Compose
                 </button>
@@ -299,18 +343,18 @@ export default function ChatList() {
                       onClick={() => { setActiveFolder(folder.id); setSelectedMessage(null); setShowMobileList(true); setShowMobileSidebar(false); }}
                       className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-medium transition-all ${
                         activeFolder === folder.id
-                          ? 'bg-primary-50 text-primary-700'
+                          ? 'bg-emerald-50 text-emerald-700'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
                       <span className="flex items-center gap-3">
-                        <folder.icon className={`w-5 h-5 ${activeFolder === folder.id ? 'text-primary-600' : folder.color}`} />
+                        <folder.icon className={`w-5 h-5 ${activeFolder === folder.id ? 'text-emerald-600' : folder.color}`} />
                         {folder.label}
                       </span>
                       {folderCounts[folder.id] > 0 && (
                         <span className={`min-w-[22px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-bold ${
                           folder.id === 'inbox' && folderCounts[folder.id] > 0
-                            ? 'bg-primary-600 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : 'bg-gray-200 text-gray-600'
                         }`}>
                           {folderCounts[folder.id]}
@@ -330,7 +374,7 @@ export default function ChatList() {
               <div className="p-3 border-b border-gray-100">
                 <div className="flex gap-2">
                   <button onClick={() => setShowMobileSidebar(true)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-xl">
-                    <SlidersHorizontal className="w-5 h-5 text-gray-500" />
+                    <Filter className="w-5 h-5 text-gray-500" />
                   </button>
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -339,7 +383,7 @@ export default function ChatList() {
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search messages..."
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                     />
                     {search && (
                       <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -353,17 +397,10 @@ export default function ChatList() {
               {/* Messages List */}
               <div className="flex-1 overflow-y-auto">
                 {filteredMessages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                    <MailOpen className="w-12 h-12 text-gray-300 mb-3" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">
-                      {search ? 'No messages found' : 'No messages'}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {search 
-                        ? 'Try adjusting your search terms'
-                        : 'Your messages will appear here'
-                      }
-                    </p>
+                  <div className="p-8 text-center">
+                    <MailOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500">No messages yet</p>
+                    <p className="text-xs text-gray-400 mt-1">Your messages will appear here</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
@@ -372,7 +409,7 @@ export default function ChatList() {
                         key={message.id}
                         onClick={() => handleSelectMessage(message)}
                         className={`w-full p-4 hover:bg-gray-50 transition-colors text-left group ${
-                          selectedMessage?.id === message.id ? 'bg-primary-50' : ''
+                          selectedMessage?.id === message.id ? 'bg-emerald-50' : ''
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -398,7 +435,7 @@ export default function ChatList() {
                             </p>
                           </div>
                           {!message.read && (
-                            <div className="w-2 h-2 bg-primary-600 rounded-full flex-shrink-0 mt-2"></div>
+                            <div className="w-2 h-2 bg-emerald-600 rounded-full flex-shrink-0 mt-2"></div>
                           )}
                         </div>
                       </button>
@@ -415,7 +452,7 @@ export default function ChatList() {
               <div className="card flex-1 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <button 
-                    onClick={handleBack}
+                    onClick={handleBackToMessages}
                     className="lg:hidden flex items-center gap-2 text-gray-600 hover:text-gray-900"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -456,7 +493,7 @@ export default function ChatList() {
             ) : (
               <div className="card flex-1 flex flex-col items-center justify-center text-center">
                 <div className="w-24 h-24 bg-gray-100 rounded-3xl flex items-center justify-center mb-6">
-                  <MailOpen className="w-12 h-12 text-gray-300" />
+                  <MessageCircle className="w-12 h-12 text-gray-300" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   Messages Hub
@@ -465,12 +502,52 @@ export default function ChatList() {
                   Choose a message from the list to read it here, or compose a new message to get started.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <button className="btn-primary flex items-center gap-2">
+                  <button onClick={() => setShowCompose(true)} className="btn-primary flex items-center gap-2">
                     <PenSquare className="w-4 h-4" /> Compose New
                   </button>
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* New Chat Modal */}
+      {showCompose && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900">Start New Chat</h3>
+                <button onClick={() => setShowCompose(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3">
+                {availableMembers.slice(0, 5).map((member) => (
+                  <button
+                    key={member.id}
+                    onClick={() => {
+                      setSelectedMember(member);
+                      setShowCompose(false);
+                    }}
+                    className="w-full p-3 hover:bg-gray-50 rounded-xl text-left transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                        <span className="text-sm">{member.avatar || '👤'}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{member.name}</h4>
+                        <p className="text-sm text-gray-500">{member.status}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

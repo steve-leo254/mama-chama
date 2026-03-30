@@ -34,6 +34,9 @@ import VerifyEmailPage from './auth/VerifyEmailPage';
 
 // Notifications
 import NotificationsPage from './components/notifications/NotificationsPage';
+import MyNotifications from './member-portal/MyNotifications';
+import MemberChat from './member-portal/MemberChat';
+import ChatList from './components/chat/AdminChatList';
 
 type AuthView = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'terms' | 'verify-email';
 
@@ -123,6 +126,7 @@ function AppContent() {
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/merry-go-round" element={<MerryGoRound />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/chat" element={<ChatList />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Dashboard />} />
           </Route>
@@ -134,7 +138,8 @@ function AppContent() {
             <Route path="/member/group-reports" element={<MemberGroupReportsPage />} />
             <Route path="/member/my-reports" element={<MemberMyReportsPage />} />
             <Route path="/member/my-loans" element={<MemberMyLoansPage />} />
-            <Route path="/member/notifications" element={<NotificationsPage />} />
+            <Route path="/member/notifications" element={<MyNotifications />} />
+            <Route path="/member/chat" element={<MemberChat />} />
             <Route path="/member/profile" element={<MemberProfilePage />} />
             <Route path="*" element={<MemberDashboardPage />} />
           </Route>

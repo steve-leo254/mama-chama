@@ -1,7 +1,7 @@
-// src/components/chat/ChatList.tsx
+// src/components/chat/MemberChat.tsx
 import { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Search, MessageCircle, Users, Inbox, Send, Star, Archive, Trash2, PenSquare, SlidersHorizontal, X, MailOpen, ChevronLeft } from 'lucide-react';
+import { Search, MessageCircle, Users, Inbox, Send, Star, Archive, Trash2, PenSquare, SlidersHorizontal, X, ChevronLeft, MailOpen } from 'lucide-react';
 import ChatInterface from './ChatInterface';
 import type { Member, Message, MessageFolder } from '../../types';
 
@@ -13,7 +13,7 @@ const FOLDERS = [
   { id: 'archive' as MessageFolder, label: 'Archive', icon: Archive, color: 'text-gray-600' },
 ];
 
-export default function ChatList() {
+export default function MemberChat() {
   const { members, currentUser, getAllChatMessages, getMyMessages, unreadMessageCount, toggleReadMessage } = useApp();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [search, setSearch] = useState('');

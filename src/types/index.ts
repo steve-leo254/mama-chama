@@ -181,6 +181,7 @@ export interface Notification {
   title: string;
   message: string;
   type: 'info' | 'warning' | 'success' | 'error';
+  category: 'system' | 'financial' | 'meeting' | 'loan' | 'personal' | 'announcement';
   date: string;
   read: boolean;
   memberId?: string;

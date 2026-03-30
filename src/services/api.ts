@@ -168,7 +168,7 @@ export const loansAPI = {
 // Fines API
 export const finesAPI = {
   list: (params?: { member_id?: string; status?: string }) =>
-    apiClient.get<Fine[]>(`/fines${new URLSearchParams(params as any).toString()}`),
+    apiClient.get<Fine[]>(`/fines/all${new URLSearchParams(params as any).toString()}`),
   create: (data: any) => apiClient.post<Fine>('/fines', data),
   pay: (id: string) => apiClient.put<Fine>(`/fines/${id}/pay`),
 };

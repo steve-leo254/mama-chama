@@ -1,42 +1,336 @@
 // src/components/member-portal/group-reports/GroupReports.tsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { reportsAPI } from '../../services/api';
 import Badge from '../../ui/Badge';
 import ProgressBar from '../../ui/ProgressBar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Wallet, Users, PiggyBank, HandCoins, AlertTriangle, Download } from 'lucide-react';
+import { Wallet, Users, PiggyBank, HandCoins, AlertTriangle, Printer } from 'lucide-react';
+import './GroupReports.css';
+
+// Extend jsPDF interface to include autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => void;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 export default function GroupReports() {
   const { stats, members, contributions, fines, loans } = useApp();
   const [activeTab, setActiveTab] = useState<'balances' | 'contributions' | 'fines'>('balances');
-  const [downloading, setDownloading] = useState(false);
-  const [monthlyData, setMonthlyData] = useState<Array<{ month: string; collected: number; target: number }>>([]);
 
   const activeMembers = members.filter(m => m.status === 'active');
   const totalFines = fines.reduce((s, f) => s + f.amount, 0);
   const paidFines = fines.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
   const unpaidFines = fines.filter(f => f.status === 'unpaid').reduce((s, f) => s + f.amount, 0);
 
-  const handleDownloadReport = async () => {
-    setDownloading(true);
-    try {
-      const blob = await reportsAPI.downloadReport('full');
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `chama_report_full_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Download failed:', error);
-      alert('Failed to download report. Please try again.');
-    } finally {
-      setDownloading(false);
+  // Enhanced Print function with beautiful styling
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Prepare data based on active tab
+    let tableContent = '';
+    let summaryContent = '';
+    let titleContent = '';
+
+    if (activeTab === 'balances') {
+      titleContent = 'Group Account Balances';
+      summaryContent = `
+        <div class="summary-grid">
+          <div class="summary-card emerald">
+            <div class="summary-label">Total Savings</div>
+            <div class="summary-value">KES ${stats.totalContributions.toLocaleString()}</div>
+          </div>
+          <div class="summary-card blue">
+            <div class="summary-label">Available Balance</div>
+            <div class="summary-value">KES ${stats.availableBalance.toLocaleString()}</div>
+          </div>
+          <div class="summary-card amber">
+            <div class="summary-label">Loans Outstanding</div>
+            <div class="summary-value">KES ${stats.totalLoans.toLocaleString()}</div>
+          </div>
+          <div class="summary-card purple">
+            <div class="summary-label">Active Members</div>
+            <div class="summary-value">${activeMembers.length}</div>
+          </div>
+        </div>
+      `;
+
+      tableContent = `
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Role</th>
+              <th>Contributed</th>
+              <th>Borrowed</th>
+              <th>Fines</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${members.map(m => {
+              const memberFines = fines.filter(f => f.member_id === m.id);
+              const unpaidAmt = memberFines.filter(f => f.status === 'unpaid').reduce((sum, f) => sum + f.amount, 0);
+              const totalContributed = contributions
+                .filter(c => c.member_id === m.id && c.status === 'completed')
+                .reduce((sum, c) => sum + c.amount, 0);
+              const totalBorrowed = loans
+                .filter(l => l.member_id === m.id && (l.status === 'active' || l.status === 'approved'))
+                .reduce((sum, l) => sum + l.amount, 0);
+              
+              return `
+                <tr>
+                  <td>${m.name}</td>
+                  <td><span class="badge badge-${m.role}">${m.role}</span></td>
+                  <td class="positive">KES ${totalContributed.toLocaleString()}</td>
+                  <td class="negative">KES ${totalBorrowed.toLocaleString()}</td>
+                  <td>${unpaidAmt > 0 ? `<span class="negative">KES ${unpaidAmt}</span>` : '—'}</td>
+                  <td><span class="badge badge-${m.status}">${m.status}</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    } else if (activeTab === 'contributions') {
+      titleContent = 'Contribution Report';
+      summaryContent = `
+        <div class="summary-grid">
+          <div class="summary-card emerald">
+            <div class="summary-label">Total Contributions</div>
+            <div class="summary-value">KES ${stats.totalContributions.toLocaleString()}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Monthly Target</div>
+            <div class="summary-value">KES ${stats.monthlyTarget.toLocaleString()}</div>
+          </div>
+          <div class="summary-card blue">
+            <div class="summary-label">Progress</div>
+            <div class="summary-value">${((stats.monthlyCollected / stats.monthlyTarget) * 100).toFixed(0)}%</div>
+          </div>
+        </div>
+      `;
+
+      tableContent = `
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Month</th>
+              <th>Type</th>
+              <th>Method</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${contributions.map(c => {
+              const member = members.find(m => m.id === c.member_id);
+              return `
+                <tr>
+                  <td>${member?.name || 'Unknown'}</td>
+                  <td>${c.month}</td>
+                  <td><span class="badge badge-${c.type}">${c.type}</span></td>
+                  <td>${c.method}</td>
+                  <td class="positive">KES ${c.amount.toLocaleString()}</td>
+                  <td><span class="badge badge-${c.status}">${c.status}</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    } else if (activeTab === 'fines') {
+      titleContent = 'Fine Summary';
+      summaryContent = `
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-label">Total Fines</div>
+            <div class="summary-value">KES ${totalFines.toLocaleString()}</div>
+          </div>
+          <div class="summary-card emerald">
+            <div class="summary-label">Fines Paid</div>
+            <div class="summary-value">KES ${paidFines.toLocaleString()}</div>
+          </div>
+          <div class="summary-card rose">
+            <div class="summary-label">Fines Unpaid</div>
+            <div class="summary-value">KES ${unpaidFines.toLocaleString()}</div>
+          </div>
+        </div>
+      `;
+
+      tableContent = `
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Reason</th>
+              <th>Month</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Paid Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${fines.map(f => `
+              <tr>
+                <td>${f.member_name}</td>
+                <td>${f.reason}</td>
+                <td>${f.month}</td>
+                <td class="negative">KES ${f.amount.toLocaleString()}</td>
+                <td><span class="badge badge-${f.status}">${f.status}</span></td>
+                <td>${f.paid_date || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     }
+
+    // Create print-friendly version with enhanced styling
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Group Reports</title>
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 20px; 
+              color: #374151;
+              line-height: 1.6;
+            }
+            h1, h2, h3 { 
+              color: #1f2937; 
+              margin-bottom: 15px;
+              font-weight: 600;
+            }
+            h1 { font-size: 28px; border-bottom: 3px solid #10b981; padding-bottom: 10px; }
+            h2 { font-size: 20px; }
+            .header-info { 
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 20px;
+            }
+            .summary-grid { 
+              display: grid; 
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+              gap: 16px; 
+              margin-bottom: 30px;
+            }
+            .summary-card { 
+              background: white;
+              border: 1px solid #e5e7eb;
+              border-radius: 8px; 
+              padding: 16px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .summary-card.emerald { border-left: 4px solid #10b981; }
+            .summary-card.blue { border-left: 4px solid #3b82f6; }
+            .summary-card.amber { border-left: 4px solid #f59e0b; }
+            .summary-card.purple { border-left: 4px solid #8b5cf6; }
+            .summary-card.rose { border-left: 4px solid #f43f5e; }
+            .summary-label { 
+              font-size: 12px; 
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: #6b7280;
+              margin-bottom: 4px;
+            }
+            .summary-value { 
+              font-size: 18px; 
+              font-weight: bold;
+              color: #1f2937;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-bottom: 20px;
+              background: white;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            th, td { 
+              border: 1px solid #e5e7eb; 
+              padding: 12px; 
+              text-align: left;
+            }
+            th { 
+              background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+              font-weight: 600;
+              color: #374151;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            tr:nth-child(even) { background-color: #f9fafb; }
+            tr:hover { background-color: #f3f4f6; }
+            .badge { 
+              padding: 4px 8px; 
+              border-radius: 12px;
+              font-size: 11px;
+              font-weight: 500;
+              text-transform: uppercase;
+            }
+            .badge.success { background: #d1fae5; color: #065f46; }
+            .badge.warning { background: #fed7aa; color: #92400e; }
+            .badge.danger { background: #fee2e2; color: #991b1b; }
+            .badge.neutral { background: #f3f4f6; color: #374151; }
+            .badge.active { background: #d1fae5; color: #065f46; }
+            .badge.inactive { background: #fee2e2; color: #991b1b; }
+            .badge.monthly { background: #dbeafe; color: #1e40af; }
+            .badge.special { background: #e9d5ff; color: #6b21a8; }
+            .badge.admin { background: #fef3c7; color: #92400e; }
+            .badge.member { background: #e0e7ff; color: #3730a3; }
+            .positive { color: #059669; font-weight: 600; }
+            .negative { color: #dc2626; font-weight: 600; }
+            .footer { 
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+            @media print { 
+              body { margin: 10px; }
+              .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header-info">
+            <h1>${titleContent}</h1>
+            <p>Generated: ${new Date().toLocaleDateString('en-US', { 
+              weekday: 'long',
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</p>
+          </div>
+          
+          ${summaryContent}
+          
+          <h2>Detailed Report</h2>
+          ${tableContent}
+          
+          <div class="footer">
+            <p>This is a computer-generated report and requires no signature.</p>
+            <p>Mama Chama Group Management System</p>
+          </div>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.print();
   };
 
   // Contribution per member
@@ -45,40 +339,21 @@ export default function GroupReports() {
     amount: contributions.filter(c => c.member_id === m.id && c.status === 'completed').reduce((s, c) => s + c.amount, 0),
   })).sort((a, b) => b.amount - a.amount);
 
-  // Balance breakdown
   const balanceData = [
     { name: 'Savings', value: stats.totalContributions, color: '#10b981' },
     { name: 'Loans Out', value: stats.totalLoans, color: '#f59e0b' },
     { name: 'Available', value: stats.availableBalance, color: '#3b82f6' },
   ];
 
-  // Fetch monthly data from API
-  useEffect(() => {
-    const fetchMonthlyData = async () => {
-      try {
-        const response = await reportsAPI.monthlyContributions(6);
-        const formattedData = response.map((item: any) => ({
-          month: item.month,
-          collected: item.amount,
-          target: item.target
-        }));
-        setMonthlyData(formattedData);
-      } catch (error) {
-        console.error('Failed to fetch monthly data:', error);
-        // Fallback to hardcoded data if API fails
-        setMonthlyData([
-          { month: 'Jul', collected: 38000, target: 40000 },
-          { month: 'Aug', collected: 40000, target: 40000 },
-          { month: 'Sep', collected: 37000, target: 40000 },
-          { month: 'Oct', collected: 40000, target: 40000 },
-          { month: 'Nov', collected: 39000, target: 40000 },
-          { month: 'Dec', collected: 30000, target: 40000 },
-        ]);
-      }
-    };
-
-    fetchMonthlyData();
-  }, []);
+  // Monthly data for trend chart
+  const monthlyData = [
+    { month: 'Jan', collected: 45000, target: 50000 },
+    { month: 'Feb', collected: 48000, target: 50000 },
+    { month: 'Mar', collected: 52000, target: 50000 },
+    { month: 'Apr', collected: 49000, target: 50000 },
+    { month: 'May', collected: 51000, target: 50000 },
+    { month: 'Jun', collected: stats.monthlyCollected, target: stats.monthlyTarget },
+  ];
 
   const tabs = [
     { key: 'balances' as const, label: 'Account Balances', icon: Wallet },
@@ -93,15 +368,18 @@ export default function GroupReports() {
           <h2 className="text-2xl font-bold text-gray-900">Group Reports</h2>
           <p className="text-gray-500 text-sm">View chama financial reports & summaries</p>
         </div>
-        <button 
-          className="btn-secondary flex items-center gap-2"
-          onClick={handleDownloadReport}
-          disabled={downloading}
-        >
-          <Download className="w-4 h-4" /> 
-          {downloading ? 'Downloading...' : 'Download Report'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            className="btn-secondary flex items-center gap-2"
+            onClick={handlePrint}
+          >
+            <Printer className="w-4 h-4" /> 
+            Print
+          </button>
+        </div>
       </div>
+
+      <div id="reports-content">
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
@@ -409,6 +687,7 @@ export default function GroupReports() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

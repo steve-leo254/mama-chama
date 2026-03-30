@@ -15,6 +15,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [showMpesa, setShowMpesa] = useState(false);
   const [selectedType, setSelectedType] = useState<PaymentType>('contribution');
   const [selectedAmount, setSelectedAmount] = useState(5000);
+  const [fineReason, setFineReason] = useState('');
   const [step, setStep] = useState<'type' | 'method'>('type');
 
   const depositTypes = [
@@ -41,7 +42,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
         method: 'mpesa',
         reference: result.receiptNumber,
         status: 'completed',
-        description: `M-Pesa ${selectedType.replace('_', ' ')} - ${result.receiptNumber}`,
+        description: selectedType === 'fine_payment' && fineReason 
+          ? `M-Pesa fine payment - ${fineReason} - ${result.receiptNumber}`
+          : `M-Pesa ${selectedType.replace('_', ' ')} - ${result.receiptNumber}`,
       });
       await refreshData();
     }
@@ -60,7 +63,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
         method: 'bank',
         reference: `BNK${Date.now().toString().slice(-8)}`,
         status: 'pending',
-        description: `Bank ${selectedType.replace('_', ' ')}`,
+        description: selectedType === 'fine_payment' && fineReason
+          ? `Bank fine payment - ${fineReason}`
+          : `Bank ${selectedType.replace('_', ' ')}`,
       });
     }
     handleClose();
@@ -123,6 +128,21 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
               )}
             </div>
 
+            {/* Fine Reason - Only show for fine payments */}
+            {selectedType === 'fine_payment' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Fine Reason</label>
+                <textarea
+                  value={fineReason}
+                  onChange={(e) => setFineReason(e.target.value)}
+                  className="input-field"
+                  rows={3}
+                  placeholder="e.g., Late payment of monthly contribution, Absence from meeting, etc."
+                />
+                <p className="text-xs text-gray-400 mt-1">💡 Please specify the reason for this fine</p>
+              </div>
+            )}
+
             {/* Payment Method */}
             <p className="text-sm font-medium text-gray-700">Choose payment method</p>
             <div className="space-y-3">
@@ -173,7 +193,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       method: 'cash',
                       reference: `CSH${Date.now().toString().slice(-8)}`,
                       status: 'pending',
-                      description: `Cash ${selectedType.replace('_', ' ')}`,
+                      description: selectedType === 'fine_payment' && fineReason
+                        ? `Cash fine payment - ${fineReason}`
+                        : `Cash ${selectedType.replace('_', ' ')}`,
                     });
                   }
                   handleClose();

@@ -42,7 +42,7 @@ export default function MyLoans() {
 
   if (!currentUser || !stats) return null;
 
-  const myLoans: Loan[] = getMemberLoans(currentUser.id);
+  const myLoans: Loan[] = getMemberLoans(currentUser.id).filter(loan => loan.status !== 'rejected');
   const totalContributed = stats?.totalContributed || 0;
   
   // Tiered loan eligibility based on contribution amount
@@ -68,19 +68,12 @@ export default function MyLoans() {
     dueDate.setMonth(dueDate.getMonth() + dur);
 
     applyLoan({
-      memberId: currentUser.id,
-      memberName: currentUser.name,
+      member_id: currentUser.id,
       amount,
-      interestRate: 10,
-      total_repayable: totalRepayable,
-      amount_paid: 0,
-      monthly_payment: Math.ceil(totalRepayable / dur),
       purpose: form.purpose,
-      application_date: new Date().toISOString().split('T')[0],
-      due_date: dueDate.toISOString().split('T')[0],
-      status: 'pending',
-      guarantors: [form.guarantor1, form.guarantor2].filter(Boolean),
       duration: dur,
+      guarantors: [form.guarantor1, form.guarantor2].filter(Boolean),
+      interest_rate: 10,
     });
     setForm({ amount: '', duration: '3', purpose: '', guarantor1: '', guarantor2: '' });
     setShowApply(false);
@@ -246,7 +239,7 @@ export default function MyLoans() {
               <select required value={form.guarantor1} onChange={(e) => setForm({ ...form, guarantor1: e.target.value })} className="input-field">
                 <option value="">Select</option>
                 {members.filter(m => m.id !== currentUser.id && m.status === 'active').map(m => (
-                  <option key={m.id} value={m.name}>{m.name}</option>
+                  <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
             </div>
@@ -254,8 +247,8 @@ export default function MyLoans() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Guarantor 2</label>
               <select value={form.guarantor2} onChange={(e) => setForm({ ...form, guarantor2: e.target.value })} className="input-field">
                 <option value="">Select (optional)</option>
-                {members.filter(m => m.id !== currentUser.id && m.status === 'active' && m.name !== form.guarantor1).map(m => (
-                  <option key={m.id} value={m.name}>{m.name}</option>
+                {members.filter(m => m.id !== currentUser.id && m.status === 'active' && m.id !== form.guarantor1).map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
             </div>

@@ -32,7 +32,7 @@ const CATEGORIES = [
 ];
 
 export default function NotificationsPage() {
-  const { getMyMessages, unreadMessageCount, toggleReadMessage, portalMode } = useApp();
+  const { getMyMessages, unreadMessageCount, toggleReadMessage, portalMode, getMemberNotifications, currentUser, markNotificationRead } = useApp();
   const [activeFolder, setActiveFolder] = useState<MessageFolder>('inbox');
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showCompose, setShowCompose] = useState(false);
@@ -41,10 +41,11 @@ export default function NotificationsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [showMobileList, setShowMobileList] = useState(true);
-  const [viewMode, setViewMode] = useState<'messages' | 'chat'>('messages');
+  const [viewMode, setViewMode] = useState<'messages' | 'chat' | 'notifications'>('messages');
 
   const isAdmin = portalMode === 'admin';
   const messages = getMyMessages(activeFolder);
+  const notifications = currentUser ? getMemberNotifications(currentUser.id) : [];
 
   // Debug logging
   console.log('=== NOTIFICATIONS DEBUG ===');

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export default function TransactionCenter() {
-  const { currentUser, getMemberTransactions, getMemberDeposits, getMemberWithdrawals, createMissingTransactions } = useApp();
+  const { currentUser, getMemberTransactions, getMemberDeposits, getMemberWithdrawals, getMemberContributions, getMemberLoanRepayments, getMemberFines, createMissingTransactions } = useApp();
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'deposits' | 'withdrawals'>('all');
@@ -73,7 +73,18 @@ export default function TransactionCenter() {
             <span className="text-sm text-emerald-700">Total Deposits (All)</span>
           </div>
           <p className="text-2xl font-bold text-emerald-900">
-            KES {(myDeposits || []).reduce((s: number, d: any) => s + d.amount, 0).toLocaleString('en-KE')}
+            KES {(
+              // Include all deposit types: generic deposits + specialized payment tables
+              (myDeposits || []).reduce((s: number, d: any) => s + d.amount, 0) +
+              // Add monthly contributions
+              (getMemberContributions(currentUser.id) || []).reduce((s: number, c: any) => s + c.amount, 0) +
+              // Add loan repayments  
+              (getMemberLoanRepayments(currentUser.id) || []).reduce((s: number, lr: any) => s + lr.amount, 0) +
+              // Add fine payments
+              (getMemberFines(currentUser.id) || []).filter((f: any) => f.status === 'paid').reduce((s: number, f: any) => s + f.amount, 0) +
+              // Add extra savings (we'll need to add this API call)
+              0 // Placeholder for extra savings until we add the API
+            ).toLocaleString('en-KE')}
           </p>
         </div>
         <div className="card bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200">

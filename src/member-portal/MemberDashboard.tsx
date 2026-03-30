@@ -39,8 +39,15 @@ export default function MemberDashboard() {
 
   const myTransactions = getMemberTransactions(currentUser.id).slice(0, 5);
   const myActiveLoans = getMemberLoans(currentUser.id).filter((l: any) => l.status === 'active');
+  const myPendingLoans = getMemberLoans(currentUser.id).filter((l: any) => l.status === 'pending');
   const myUnpaidFines = getMemberFines(currentUser.id).filter((f: any) => f.status === 'unpaid');
   const nextMeeting = meetings.find((m: any) => m.status === 'upcoming');
+
+  // Use API data for all values
+  const actualSavings = stats.savingsBalance || 0;
+  const actualLoanBalance = stats.activeLoanBalance || 0;
+  const actualTotalContributed = stats.totalContributed || 0;
+  const actualUnpaidFines = stats.finesUnpaid || 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -65,19 +72,19 @@ export default function MemberDashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">My Savings</p>
-              <p className="text-xl font-bold mt-1">KES {(stats?.savingsBalance || 0).toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {actualSavings.toLocaleString()}</p>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">Total Contributed</p>
-              <p className="text-xl font-bold mt-1">KES {(stats?.totalContributed || 0).toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {actualTotalContributed.toLocaleString()}</p>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">Loan Balance</p>
-              <p className="text-xl font-bold mt-1">KES {(stats?.activeLoanBalance || 0).toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {actualLoanBalance.toLocaleString()}</p>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4">
               <p className="text-emerald-100 text-xs">Unpaid Fines</p>
-              <p className="text-xl font-bold mt-1">KES {(stats?.finesUnpaid || 0).toLocaleString()}</p>
+              <p className="text-xl font-bold mt-1">KES {actualUnpaidFines.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -147,22 +154,24 @@ export default function MemberDashboard() {
         {/* Active Loans */}
         <div className="xl:col-span-2">
           <div className="card">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">My Active Loans</h3>
-            {myActiveLoans.length === 0 ? (
+            <h3 className="text-lg font-bold text-gray-900 mb-4">My Loans</h3>
+            {myActiveLoans.length === 0 && myPendingLoans.length === 0 ? (
               <div className="text-center py-8">
                 <HandCoins className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">No active loans</p>
+                <p className="text-gray-500 text-sm">No loans yet</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {myActiveLoans.map(loan => (
+                {[...myPendingLoans, ...myActiveLoans].map(loan => (
                   <div key={loan.id} className="bg-gray-50 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="font-semibold text-gray-900">{loan.purpose}</p>
                         <p className="text-xs text-gray-500">Due: {loan.due_date}</p>
                       </div>
-                      <Badge variant="info">Active</Badge>
+                      <Badge variant={loan.status === 'pending' ? 'warning' : 'info'}>
+                        {loan.status === 'pending' ? 'Pending' : 'Active'}
+                      </Badge>
                     </div>
                     <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
                       <div>
@@ -178,7 +187,9 @@ export default function MemberDashboard() {
                         <p className="font-semibold text-rose-600">KES {(loan.total_repayable - loan.amount_paid).toLocaleString()}</p>
                       </div>
                     </div>
-                    <ProgressBar value={loan.amount_paid} max={loan.total_repayable} color="emerald" />
+                    {loan.status === 'active' && (
+                      <ProgressBar value={loan.amount_paid} max={loan.total_repayable} color="emerald" />
+                    )}
                   </div>
                 ))}
               </div>
