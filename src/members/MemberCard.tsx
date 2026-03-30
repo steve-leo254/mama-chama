@@ -1,9 +1,10 @@
 // src/components/members/MemberCard.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Phone, Mail, MoreVertical, Key } from 'lucide-react';
 import type { Member } from '../types';
 import Badge from '../ui/Badge';
 import { toast } from '../components/ui/Toast';
+import { useApp } from '../context/AppContext';
 
 interface MemberCardProps {
   member: Member;
@@ -12,6 +13,32 @@ interface MemberCardProps {
 export default function MemberCard({ member }: MemberCardProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [memberStats, setMemberStats] = useState({
+    totalContributed: 0,
+    totalBorrowed: 0,
+    finesUnpaid: 0,
+  });
+  const { getMemberStats } = useApp();
+
+  useEffect(() => {
+    const loadMemberStats = async () => {
+      try {
+        const stats = await getMemberStats(member.id);
+        console.log('Member stats for', member.name, ':', stats);
+        setMemberStats({
+          totalContributed: stats.totalContributed || 0,
+          totalBorrowed: stats.activeLoanBalance || 0,
+          finesUnpaid: stats.finesUnpaid || 0,
+        });
+      } catch (err) {
+        console.error('Failed to load member stats:', err);
+      }
+    };
+
+    if (member.id) {
+      loadMemberStats();
+    }
+  }, [member.id, getMemberStats]);
 
   const generateNewPassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
@@ -90,11 +117,11 @@ export default function MemberCard({ member }: MemberCardProps) {
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-emerald-50 rounded-xl p-3">
           <p className="text-xs text-gray-500">Contributed</p>
-          <p className="text-sm font-bold text-emerald-700">KES {(member.totalContributed || 0).toLocaleString()}</p>
+          <p className="text-sm font-bold text-emerald-700">KES {memberStats.totalContributed.toLocaleString()}</p>
         </div>
         <div className="bg-amber-50 rounded-xl p-3">
           <p className="text-xs text-gray-500">Borrowed</p>
-          <p className="text-sm font-bold text-amber-700">KES {(member.totalBorrowed || 0).toLocaleString()}</p>
+          <p className="text-sm font-bold text-amber-700">KES {memberStats.totalBorrowed.toLocaleString()}</p>
         </div>
       </div>
 

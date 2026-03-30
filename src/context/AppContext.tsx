@@ -35,6 +35,7 @@ const initialState: {
     monthlyCollected: number;
     monthlyTarget: number;
     transactions: Transaction[];
+    monthlyData: Array<{ month: string; collected: number; target: number }>;
   };
 } = {
   members: [],
@@ -61,6 +62,7 @@ const initialState: {
     monthlyCollected: 0,
     monthlyTarget: 10000,
     transactions: [],
+    monthlyData: [],
   }
 };
 
@@ -205,6 +207,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           monthlyCollected: stats.monthly_collected,
           monthlyTarget: stats.monthly_target,
           transactions,
+          monthlyData: stats.monthly_data || [],
         }
       });
     } catch (err) {
@@ -461,9 +464,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const getMemberStats = async (memberId: string): Promise<MemberStats> => {
     try {
-      const response = await membersAPI.getStats(memberId);
+      const response: any = await membersAPI.getStats(memberId);
       console.log('📊 Member stats from API:', response);
-      return response;
+      
+      // Map snake_case API response to camelCase TypeScript interface
+      return {
+        totalContributed: response.total_contributed || 0,
+        totalFines: response.total_fines || 0,
+        finesPaid: response.fines_paid || 0,
+        finesUnpaid: response.fines_unpaid || 0,
+        activeLoanBalance: response.active_loan_balance || 0,
+        totalLoansTaken: response.total_loans_taken || 0,
+        savingsBalance: response.savings_balance || 0,
+        contributionStreak: response.contribution_streak || 0,
+        lastContributionDate: response.last_contribution_date || '',
+        pendingWithdrawals: response.pending_withdrawals || 0,
+        // Add monthly collection stats
+        monthlyCollected: response.total_contributed || 0, // Use total contributed as monthly collected
+        monthlyTarget: 10000, // Default monthly target
+      };
     } catch (err) {
       console.error('❌ Failed to load member stats from API:', err);
       // Return empty stats on error
@@ -478,6 +497,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         contributionStreak: 0,
         lastContributionDate: '',
         pendingWithdrawals: 0,
+        monthlyCollected: 0,
+        monthlyTarget: 10000,
       };
     }
   };

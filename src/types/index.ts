@@ -161,6 +161,8 @@ export interface MemberStats {
   contributionStreak: number;
   lastContributionDate: string;
   pendingWithdrawals: number;
+  monthlyCollected: number;
+  monthlyTarget: number;
 }
 
 export interface LoanRepayment {

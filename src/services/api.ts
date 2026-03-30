@@ -271,6 +271,28 @@ export const messagesAPI = {
   permanentDelete: (id: string) => apiClient.delete<any>(`/messages/${id}/permanent`),
 };
 
+// Reports API
+export const reportsAPI = {
+  monthlyContributions: (months: number = 6) => apiClient.get<any[]>(`/reports/monthly-contributions?months=${months}`),
+  memberContributions: () => apiClient.get<any[]>('/reports/member-contributions'),
+  downloadReport: (reportType: string = 'full') => {
+    const token = localStorage.getItem('authToken');
+    const url = `${API_BASE_URL}/reports/download?report_type=${reportType}`;
+    
+    return fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      return response.blob();
+    });
+  },
+};
+
 // Chama Settings API
 export const chamaSettingsAPI = {
   get: () => apiClient.get<any>('/settings'),

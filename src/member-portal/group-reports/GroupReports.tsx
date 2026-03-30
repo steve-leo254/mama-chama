@@ -1,19 +1,43 @@
 // src/components/member-portal/group-reports/GroupReports.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { reportsAPI } from '../../services/api';
 import Badge from '../../ui/Badge';
 import ProgressBar from '../../ui/ProgressBar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Wallet, Users, PiggyBank, HandCoins, AlertTriangle, Download } from 'lucide-react';
 
 export default function GroupReports() {
-  const { stats, members, contributions, fines } = useApp();
+  const { stats, members, contributions, fines, loans } = useApp();
   const [activeTab, setActiveTab] = useState<'balances' | 'contributions' | 'fines'>('balances');
+  const [downloading, setDownloading] = useState(false);
+  const [monthlyData, setMonthlyData] = useState<Array<{ month: string; collected: number; target: number }>>([]);
 
   const activeMembers = members.filter(m => m.status === 'active');
   const totalFines = fines.reduce((s, f) => s + f.amount, 0);
   const paidFines = fines.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
   const unpaidFines = fines.filter(f => f.status === 'unpaid').reduce((s, f) => s + f.amount, 0);
+
+  const handleDownloadReport = async () => {
+    setDownloading(true);
+    try {
+      const blob = await reportsAPI.downloadReport('full');
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `chama_report_full_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download report. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   // Contribution per member
   const memberContribData = activeMembers.map(m => ({
@@ -28,15 +52,33 @@ export default function GroupReports() {
     { name: 'Available', value: stats.availableBalance, color: '#3b82f6' },
   ];
 
-  // Monthly collection data
-  const monthlyData = [
-    { month: 'Jul', collected: 38000, target: 40000 },
-    { month: 'Aug', collected: 40000, target: 40000 },
-    { month: 'Sep', collected: 37000, target: 40000 },
-    { month: 'Oct', collected: 40000, target: 40000 },
-    { month: 'Nov', collected: 39000, target: 40000 },
-    { month: 'Dec', collected: 30000, target: 40000 },
-  ];
+  // Fetch monthly data from API
+  useEffect(() => {
+    const fetchMonthlyData = async () => {
+      try {
+        const response = await reportsAPI.monthlyContributions(6);
+        const formattedData = response.map((item: any) => ({
+          month: item.month,
+          collected: item.amount,
+          target: item.target
+        }));
+        setMonthlyData(formattedData);
+      } catch (error) {
+        console.error('Failed to fetch monthly data:', error);
+        // Fallback to hardcoded data if API fails
+        setMonthlyData([
+          { month: 'Jul', collected: 38000, target: 40000 },
+          { month: 'Aug', collected: 40000, target: 40000 },
+          { month: 'Sep', collected: 37000, target: 40000 },
+          { month: 'Oct', collected: 40000, target: 40000 },
+          { month: 'Nov', collected: 39000, target: 40000 },
+          { month: 'Dec', collected: 30000, target: 40000 },
+        ]);
+      }
+    };
+
+    fetchMonthlyData();
+  }, []);
 
   const tabs = [
     { key: 'balances' as const, label: 'Account Balances', icon: Wallet },
@@ -51,8 +93,13 @@ export default function GroupReports() {
           <h2 className="text-2xl font-bold text-gray-900">Group Reports</h2>
           <p className="text-gray-500 text-sm">View chama financial reports & summaries</p>
         </div>
-        <button className="btn-secondary flex items-center gap-2">
-          <Download className="w-4 h-4" /> Download Report
+        <button 
+          className="btn-secondary flex items-center gap-2"
+          onClick={handleDownloadReport}
+          disabled={downloading}
+        >
+          <Download className="w-4 h-4" /> 
+          {downloading ? 'Downloading...' : 'Download Report'}
         </button>
       </div>
 
@@ -180,7 +227,13 @@ export default function GroupReports() {
                 <tbody className="divide-y divide-gray-50">
                   {members.map(m => {
                     const memberFines = fines.filter(f => f.member_id === m.id);
-                    const unpaidAmt = memberFines.filter(f => f.status === 'unpaid').reduce((s, f) => s + f.amount, 0);
+                    const unpaidAmt = memberFines.filter(f => f.status === 'unpaid').reduce((sum, f) => sum + f.amount, 0);
+                    const totalContributed = contributions
+                      .filter(c => c.member_id === m.id && c.status === 'completed')
+                      .reduce((sum, c) => sum + c.amount, 0);
+                    const totalBorrowed = loans
+                      .filter(l => l.member_id === m.id && (l.status === 'active' || l.status === 'approved'))
+                      .reduce((sum, l) => sum + l.amount, 0);
                     return (
                       <tr key={m.id} className="hover:bg-gray-50/50">
                         <td className="px-6 py-4">
@@ -193,10 +246,10 @@ export default function GroupReports() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right text-sm font-semibold text-emerald-600">
-                          KES {(m.totalContributed || 0).toLocaleString()}
+                          KES {totalContributed.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-right text-sm font-semibold text-amber-600 hidden sm:table-cell">
-                          KES {(m.totalBorrowed || 0).toLocaleString()}
+                          KES {totalBorrowed.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-right text-sm hidden md:table-cell">
                           {unpaidAmt > 0 ? (
@@ -226,7 +279,7 @@ export default function GroupReports() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-bold text-gray-900">Monthly Collection Progress</h3>
-                <p className="text-sm text-gray-500">December 2024</p>
+                <p className="text-sm text-gray-500">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-emerald-600">
@@ -260,13 +313,18 @@ export default function GroupReports() {
           {/* Individual Status */}
           <div className="card overflow-hidden p-0">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">December 2024 — Member Status</h3>
+              <h3 className="font-bold text-gray-900">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} — Member Status</h3>
             </div>
             <div className="divide-y divide-gray-50">
               {members.filter(m => m.status === 'active').map(m => {
-                const decContrib = contributions.find(
-                  c => c.member_id === m.id && c.month === 'December 2024' && c.type === 'monthly'
+                const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const currentContributions = contributions.filter(
+                  c => c.member_id === m.id && c.month === currentMonth && c.type === 'monthly'
                 );
+                const totalContributed = currentContributions.reduce((sum, c) => sum + c.amount, 0);
+                const hasCompletedContrib = currentContributions.some(c => c.status === 'completed');
+                const allCompleted = currentContributions.length > 0 && currentContributions.every(c => c.status === 'completed');
+                
                 return (
                   <div key={m.id} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
                     <div className="flex items-center gap-3">
@@ -275,14 +333,16 @@ export default function GroupReports() {
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-sm font-semibold text-gray-900">
-                        KES {decContrib ? decContrib.amount.toLocaleString() : '0'}
+                        KES {totalContributed.toLocaleString()}
                       </span>
                       <Badge variant={
-                        decContrib?.status === 'completed' ? 'success' :
-                        decContrib?.status === 'pending' ? 'warning' :
-                        decContrib?.status === 'overdue' ? 'danger' : 'neutral'
+                        allCompleted ? 'success' :
+                        hasCompletedContrib ? 'warning' :
+                        'neutral'
                       }>
-                        {decContrib?.status || 'not paid'}
+                        {allCompleted ? 'completed' :
+                         hasCompletedContrib ? 'partial' :
+                         'not paid'}
                       </Badge>
                     </div>
                   </div>
