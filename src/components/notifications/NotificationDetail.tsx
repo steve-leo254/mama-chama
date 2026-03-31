@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import ComposeMessage from './ComposeMessage';
+import PollViewer from '../polls/PollViewer';
 import {
   ArrowLeft, Star, Archive, Trash2, Reply, ReplyAll, Forward,
   MoreVertical, Paperclip, Download, FileText, Image, Sheet,
@@ -151,6 +152,7 @@ export default function NotificationDetail({ message, onBack, onCompose }: Notif
                   label === 'meeting' ? 'bg-primary-100 text-primary-700' :
                   label === 'loan' ? 'bg-purple-100 text-purple-700' :
                   label === 'reminder' ? 'bg-teal-100 text-teal-700' :
+                  label === 'poll' ? 'bg-purple-100 text-purple-700' :
                   'bg-gray-100 text-gray-700'
                 }`}>
                   {label}
@@ -159,11 +161,16 @@ export default function NotificationDetail({ message, onBack, onCompose }: Notif
             </div>
           )}
 
+          {/* Poll Viewer */}
+          {message.labels?.includes('poll') && <PollViewer message={message} />}
+
           {/* Body */}
-          <div
-            className="prose prose-sm max-w-none text-gray-700 leading-relaxed mb-6"
-            dangerouslySetInnerHTML={{ __html: message.body }}
-          />
+          {!message.labels?.includes('poll') && (
+            <div
+              className="prose prose-sm max-w-none text-gray-700 leading-relaxed mb-6"
+              dangerouslySetInnerHTML={{ __html: message.body }}
+            />
+          )}
 
           {/* Attachments */}
           {(message.attachments || []).length > 0 && (

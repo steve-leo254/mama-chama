@@ -27,6 +27,7 @@ const initialState: {
     totalMembers: number;
     activeMembers: number;
     totalContributions: number;
+    totalSavings: number;
     totalLoans: number;
     pendingLoanApplications: number;
     monthlyContributions: number;
@@ -36,6 +37,12 @@ const initialState: {
     monthlyTarget: number;
     transactions: Transaction[];
     monthlyData: Array<{ month: string; collected: number; target: number }>;
+    trends: {
+      balanceTrend: number;
+      contributionsTrend: number;
+      loansTrend: number;
+      membersTrend: number;
+    };
   };
 } = {
   members: [],
@@ -54,6 +61,7 @@ const initialState: {
     totalMembers: 0,
     activeMembers: 0,
     totalContributions: 0,
+    totalSavings: 0,
     totalLoans: 0,
     pendingLoanApplications: 0,
     monthlyContributions: 0,
@@ -63,6 +71,12 @@ const initialState: {
     monthlyTarget: 10000,
     transactions: [],
     monthlyData: [],
+    trends: {
+      balanceTrend: 0,
+      contributionsTrend: 0,
+      loansTrend: 0,
+      membersTrend: 0,
+    }
   }
 };
 
@@ -160,6 +174,79 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData(prev => ({ ...prev, ...updates }));
   };
 
+  // Calculate trends from monthly data
+  const calculateTrends = (monthlyData: Array<{ month: string; collected: number; target: number }>, currentStats: any, transactions: Transaction[], loans: Loan[]) => {
+    if (monthlyData.length < 2) {
+      return {
+        balanceTrend: 0,
+        contributionsTrend: 0,
+        loansTrend: 0,
+        membersTrend: 0,
+      };
+    }
+
+    const currentMonth = monthlyData[monthlyData.length - 1];
+    const previousMonth = monthlyData[monthlyData.length - 2];
+
+    // Calculate contribution trend
+    const contributionsTrend = previousMonth.collected > 0 
+      ? ((currentMonth.collected - previousMonth.collected) / previousMonth.collected) * 100 
+      : 0;
+
+    // Calculate balance trend from transactions
+    const currentDate = new Date();
+    const previousMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const currentMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    
+    const currentMonthTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate >= currentMonthDate && transactionDate < currentDate;
+    });
+    
+    const previousMonthTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate >= previousMonthDate && transactionDate < currentMonthDate;
+    });
+    
+    const currentMonthNetChange = currentMonthTransactions.reduce((sum, t) => 
+      sum + (t.direction === 'in' ? t.amount : -t.amount), 0
+    );
+    
+    const previousMonthNetChange = previousMonthTransactions.reduce((sum, t) => 
+      sum + (t.direction === 'in' ? t.amount : -t.amount), 0
+    );
+    
+    const balanceTrend = previousMonthNetChange > 0 
+      ? ((currentMonthNetChange - previousMonthNetChange) / Math.abs(previousMonthNetChange)) * 100 
+      : (currentMonthNetChange > 0 ? 100 : 0);
+
+    // Calculate loans trend from loan data
+    const currentMonthLoans = loans.filter(l => {
+      const loanDate = new Date(l.application_date);
+      return loanDate >= currentMonthDate && loanDate < currentDate;
+    });
+    
+    const previousMonthLoans = loans.filter(l => {
+      const loanDate = new Date(l.application_date);
+      return loanDate >= previousMonthDate && loanDate < currentMonthDate;
+    });
+    
+    const loansTrend = previousMonthLoans.length > 0 
+      ? currentMonthLoans.length - previousMonthLoans.length 
+      : (currentMonthLoans.length > 0 ? currentMonthLoans.length : 0);
+
+    // For members trend, we'll use simple approximation based on current data
+    // In a real app, you'd want historical data for this metric
+    const membersTrend = currentStats.total_members > 0 ? 1 : 0; // Placeholder
+
+    return {
+      balanceTrend: Math.round(balanceTrend * 10) / 10,
+      contributionsTrend: Math.round(contributionsTrend * 10) / 10,
+      loansTrend: Math.round(loansTrend * 10) / 10,
+      membersTrend: Math.round(membersTrend * 10) / 10,
+    };
+  };
+
   // Load initial data
   const refreshData = async () => {
     if (!isAuthenticated) return;
@@ -199,15 +286,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           totalMembers: stats.total_members,
           activeMembers: stats.active_members,
           totalContributions: stats.total_contributions,
-          totalLoans: stats.total_loans_amount,
+          totalSavings: stats.total_savings,
+          totalLoans: loans.filter(l => l.status === 'active' || l.status === 'approved').length,
           pendingLoanApplications: loans.filter(l => l.status === 'pending').length,
           monthlyContributions: stats.monthly_collected,
           availableBalance: stats.available_balance,
           totalFines: stats.total_fines_unpaid,
           monthlyCollected: stats.monthly_collected,
-          monthlyTarget: stats.monthly_target,
+          monthlyTarget: stats.monthly_target || 10000,
           transactions,
           monthlyData: stats.monthly_data || [],
+          trends: calculateTrends(stats.monthly_data || [], stats, transactions, loans),
         }
       });
     } catch (err) {
@@ -470,6 +559,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Map snake_case API response to camelCase TypeScript interface
       return {
         totalContributed: response.total_contributed || 0,
+        extraSavings: response.extra_savings || 0,
         totalFines: response.total_fines || 0,
         finesPaid: response.fines_paid || 0,
         finesUnpaid: response.fines_unpaid || 0,
@@ -488,6 +578,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Return empty stats on error
       return {
         totalContributed: 0,
+        extraSavings: 0,
         totalFines: 0,
         finesPaid: 0,
         finesUnpaid: 0,

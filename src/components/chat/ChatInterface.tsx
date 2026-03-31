@@ -22,9 +22,9 @@ export default function ChatInterface({ member, onClose }: ChatInterfaceProps) {
   useEffect(() => {
     const allMessages = getAllChatMessages();
     const chatMessages = allMessages.filter((msg: Message) => 
-      msg.from && msg.from.id && msg.to &&
-      ((msg.from.id === member.id && msg.to.some((to: any) => to.id === currentUser?.id)) ||
-      (msg.from.id === currentUser?.id && msg.to.some((to: any) => to.id === member.id)))
+      msg.from_user && msg.from_user.id && msg.to_users &&
+      ((msg.from_user.id === member.id && msg.to_users.some((to: any) => to.id === currentUser?.id)) ||
+      (msg.from_user.id === currentUser?.id && msg.to_users.some((to: any) => to.id === member.id)))
     );
     setMessages(chatMessages.sort((a: Message, b: Message) => 
       new Date(`${b.date} ${b.time}`).getTime() - new Date(`${a.date} ${a.time}`).getTime()
@@ -60,8 +60,8 @@ export default function ChatInterface({ member, onClose }: ChatInterfaceProps) {
       // Add optimistic message to local state
       const localMessage: Message = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        from: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar, role: currentUser.role },
-        to: [{ id: member.id, name: member.name }],
+        from_user: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar, role: currentUser.role },
+        to_users: [{ id: member.id, name: member.name }],
         subject: 'Chat Message',
         body: newMessage,
         preview: newMessage.substring(0, 100),
@@ -102,9 +102,9 @@ export default function ChatInterface({ member, onClose }: ChatInterfaceProps) {
       // Refresh messages to update the UI
       const allMessages = getAllChatMessages();
       const chatMessages = allMessages.filter((msg: Message) => 
-        msg.from && msg.from.id && msg.to &&
-        ((msg.from.id === member.id && msg.to.some((to: any) => to.id === currentUser?.id)) ||
-        (msg.from.id === currentUser?.id && msg.to.some((to: any) => to.id === member.id)))
+        msg.from_user && msg.from_user.id && msg.to_users &&
+        ((msg.from_user.id === member.id && msg.to_users.some((to: any) => to.id === currentUser?.id)) ||
+        (msg.from_user.id === currentUser?.id && msg.to_users.some((to: any) => to.id === member.id)))
       );
       setMessages(chatMessages.sort((a: Message, b: Message) => 
         new Date(`${a.date} ${a.time}`).getTime() - new Date(`${b.date} ${b.time}`).getTime()
@@ -142,7 +142,7 @@ export default function ChatInterface({ member, onClose }: ChatInterfaceProps) {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const isOwnMessage = (message: Message) => message.from && message.from.id === currentUser?.id;
+  const isOwnMessage = (message: Message) => message.from_user && message.from_user.id === currentUser?.id;
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -210,8 +210,8 @@ export default function ChatInterface({ member, onClose }: ChatInterfaceProps) {
                 ? 'bg-primary-600 text-white' 
                 : 'bg-gray-100 text-gray-900'
             } rounded-2xl px-4 py-2 shadow-sm`}>
-              {!isOwnMessage(message) && message.from && (
-                <p className="text-xs font-medium mb-1 opacity-75">{message.from.name}</p>
+              {!isOwnMessage(message) && message.from_user && (
+                <p className="text-xs font-medium mb-1 opacity-75">{message.from_user.name}</p>
               )}
               <p className="text-sm whitespace-pre-wrap">{message.body}</p>
               <p className={`text-xs mt-1 ${isOwnMessage(message) ? 'text-primary-200' : 'text-gray-500'}`}>

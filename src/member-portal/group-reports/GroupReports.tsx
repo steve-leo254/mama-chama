@@ -340,7 +340,7 @@ export default function GroupReports() {
   })).sort((a, b) => b.amount - a.amount);
 
   const balanceData = [
-    { name: 'Savings', value: stats.totalContributions, color: '#10b981' },
+    { name: 'Savings', value: stats.totalSavings, color: '#10b981' },
     { name: 'Loans Out', value: stats.totalLoans, color: '#f59e0b' },
     { name: 'Available', value: stats.availableBalance, color: '#3b82f6' },
   ];
@@ -409,7 +409,7 @@ export default function GroupReports() {
                 <PiggyBank className="w-5 h-5 text-emerald-600" />
                 <span className="text-sm text-emerald-700">Total Savings</span>
               </div>
-              <p className="text-2xl font-bold text-emerald-900">KES {stats.totalContributions.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-emerald-900">KES {stats.totalSavings.toLocaleString()}</p>
             </div>
             <div className="card bg-gradient-to-br from-primary-50 to-primary-100/50 border-primary-200">
               <div className="flex items-center gap-2 mb-2">

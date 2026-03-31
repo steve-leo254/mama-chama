@@ -51,7 +51,7 @@ export default function ChatList() {
       filtered = filtered.filter(m =>
         m.subject.toLowerCase().includes(s) ||
         m.preview.toLowerCase().includes(s) ||
-        (m.from && m.from.name.toLowerCase().includes(s))
+        (m.from_user && m.from_user.name.toLowerCase().includes(s))
       );
     }
     return filtered.sort((a, b) => new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime());
@@ -61,9 +61,9 @@ export default function ChatList() {
   const getLastMessage = (memberId: string) => {
     const allMessages = getAllChatMessages();
     const chatMessages = allMessages.filter((msg: Message) => 
-      msg.from && msg.from.id && msg.to &&
-      ((msg.from.id === memberId && msg.to.some((to: any) => to.id === currentUser?.id)) ||
-      (msg.from.id === currentUser?.id && msg.to.some((to: any) => to.id === memberId)))
+      msg.from_user && msg.from_user.id && msg.to_users &&
+      ((msg.from_user.id === memberId && msg.to_users.some((to: any) => to.id === currentUser?.id)) ||
+      (msg.from_user.id === currentUser?.id && msg.to_users.some((to: any) => to.id === memberId)))
     );
     return chatMessages.sort((a: Message, b: Message) => 
       new Date(`${b.date} ${b.time}`).getTime() - new Date(`${a.date} ${a.time}`).getTime()
@@ -73,8 +73,8 @@ export default function ChatList() {
   const getUnreadCount = (memberId: string) => {
     const allMessages = getAllChatMessages();
     return allMessages.filter((msg: Message) => 
-      msg.from && msg.from.id === memberId && msg.to &&
-      msg.to.some((to: any) => to.id === currentUser?.id) && 
+      msg.from_user && msg.from_user.id === memberId && msg.to_users &&
+      msg.to_users.some((to: any) => to.id === currentUser?.id) && 
       !msg.read
     ).length;
   };
@@ -378,13 +378,13 @@ export default function ChatList() {
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-semibold text-gray-600">
-                              {message.from?.avatar || 'U'}
+                              {message.from_user?.avatar || 'U'}
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <h3 className={`text-sm ${message.read ? 'font-medium text-gray-700' : 'font-semibold text-gray-900'} truncate`}>
-                                {message.from?.name || 'Unknown'}
+                                {message.from_user?.name || 'Unknown'}
                               </h3>
                               <span className="text-xs text-gray-500">
                                 {message.time}
@@ -424,11 +424,11 @@ export default function ChatList() {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-gray-600">
-                        {selectedMessage.from?.avatar || 'U'}
+                        {selectedMessage.from_user?.avatar || 'U'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{selectedMessage.from?.name || 'Unknown'}</h3>
+                      <h3 className="font-semibold text-gray-900">{selectedMessage.from_user?.name || 'Unknown'}</h3>
                       <p className="text-xs text-gray-500">{selectedMessage.date} at {selectedMessage.time}</p>
                     </div>
                   </div>

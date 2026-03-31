@@ -8,6 +8,7 @@ import {
   Users, BarChart3, Plus, Upload, File
 } from 'lucide-react';
 import type { Message } from '../../types';
+import { pollsAPI } from '../../services/api';
 
 interface ComposeMessageProps {
   onClose: () => void;
@@ -43,25 +44,115 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
   const [messageType, setMessageType] = useState<'message' | 'poll' | 'group'>('message');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Poll data state
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const [allowMultipleVotes, setAllowMultipleVotes] = useState(false);
+  const [anonymousVoting, setAnonymousVoting] = useState(false);
+
   const availableRecipients = members.filter(m => m.id !== currentUser?.id && m.status === 'active');
 
+  // Helper functions
+  const removeEmptyPollOption = (index: number) => {
+    if (pollOptions.length > 2) {
+      const newOptions = pollOptions.filter((_, i) => i !== index);
+      setPollOptions(newOptions);
+    }
+  };
+
+  const addPollOption = () => {
+    if (pollOptions.length < 5) {
+      setPollOptions([...pollOptions, '']);
+    }
+  };
+
   const handleSend = async () => {
-    // Get content from editor
+    if (!currentUser) return;
+    
+    // Handle poll creation
+    if (messageType === 'poll') {
+      if (!pollQuestion.trim()) {
+        alert('Please enter a poll question');
+        return;
+      }
+      
+      const validOptions = pollOptions.filter(opt => opt.trim());
+      if (validOptions.length < 2) {
+        alert('Please enter at least 2 poll options');
+        return;
+      }
+
+      setSending(true);
+      try {
+        const pollData = {
+          title: pollQuestion,
+          description: subject || undefined,
+          allow_multiple_votes: allowMultipleVotes,
+          anonymous_voting: anonymousVoting,
+          options: validOptions.map((option, index) => ({
+            option_text: option,
+            option_order: index
+          }))
+        };
+
+        const poll = await pollsAPI.create(pollData);
+        
+        // Send notification about new poll
+        const pollMessage = `📊 New Poll: ${pollQuestion}\n\n${validOptions.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}\n\nVote now!`;
+        
+        if (announcement) {
+          const allMemberIds = availableRecipients.map(m => m.id);
+          await sendMessage({
+            from: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar, role: currentUser.role },
+            to_ids: allMemberIds,
+            subject: `📊 Poll: ${pollQuestion}`,
+            body: pollMessage,
+            preview: pollMessage.slice(0, 100),
+            folder: 'sent',
+            labels: ['poll'],
+            attachments: [],
+            category: 'announcement',
+            priority: priority,
+            poll_id: poll.id, // Store poll ID for easy linking
+          });
+        } else {
+          const recipient = availableRecipients.find(m => m.name === to);
+          if (recipient) {
+            await sendMessage({
+              from: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar, role: currentUser.role },
+              to_ids: [recipient.id],
+              subject: `📊 Poll: ${pollQuestion}`,
+              body: pollMessage,
+              preview: pollMessage.slice(0, 100),
+              folder: 'sent',
+              labels: ['poll'],
+              attachments: [],
+              category: 'personal',
+              priority: priority,
+              poll_id: poll.id, // Store poll ID for easy linking
+            });
+          }
+        }
+
+        setSending(false);
+        onClose();
+        return;
+      } catch (error) {
+        console.error('Failed to create poll:', error);
+        setSending(false);
+        alert('Failed to create poll. Please try again.');
+        return;
+      }
+    }
+
+    // Regular message handling
     const editorContent = editorRef.current?.innerHTML || '';
     const textContent = editorRef.current?.innerText || editorContent || body;
-    
-    console.log('Content debug:');
-    console.log('- editorRef.current:', editorRef.current);
-    console.log('- innerHTML:', editorContent);
-    console.log('- innerText:', editorRef.current?.innerText);
-    console.log('- body state:', body);
-    console.log('- final content:', textContent);
     
     if (!textContent.trim()) {
       console.error('No content to send');
       return;
     }
-    if (!currentUser) return;
 
     setSending(true);
     await new Promise(r => setTimeout(r, 800));
@@ -108,7 +199,6 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
         });
       }
 
-      // Only close on success
       setSending(false);
       onClose();
     } catch (error) {
@@ -455,13 +545,16 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleSend}
-                    disabled={sending || (!to && !replyTo && !announcement)}
+                    disabled={sending || (!to && !replyTo && !announcement && messageType !== 'poll')}
                     className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-semibold text-sm shadow-lg shadow-primary-500/25 hover:from-primary-700 hover:to-primary-800 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {sending ? (
                       <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</>
                     ) : (
-                      <><Send className="w-4 h-4" /> {announcement ? 'Send Announcement' : 'Send'}</>
+                      <><Send className="w-4 h-4" /> {
+                        messageType === 'poll' ? 'Create Poll' :
+                        announcement ? 'Send Announcement' : 'Send'
+                      }</>
                     )}
                   </button>
                 </div>
@@ -495,6 +588,8 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
                   <label className="block text-sm font-medium text-gray-700 mb-2">Poll Question</label>
                   <input
                     type="text"
+                    value={pollQuestion}
+                    onChange={(e) => setPollQuestion(e.target.value)}
                     placeholder="What's your poll question?"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
@@ -503,21 +598,29 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Poll Options</label>
                   <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Option 1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Option 2"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Option 3 (optional)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                    />
+                    {pollOptions.map((option, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...pollOptions];
+                          newOptions[index] = e.target.value;
+                          setPollOptions(newOptions);
+                        }}
+                        placeholder={`Option ${index + 1}`}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                      />
+                    ))}
+                    {pollOptions.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={addPollOption}
+                        className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        + Add Option
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -525,11 +628,21 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
                   <label className="block text-sm font-medium text-gray-700 mb-2">Poll Settings</label>
                   <div className="space-y-2">
                     <label className="flex items-center gap-2">
-                      <input type="checkbox" className="rounded text-purple-600" />
+                      <input
+                        type="checkbox"
+                        checked={allowMultipleVotes}
+                        onChange={(e) => setAllowMultipleVotes(e.target.checked)}
+                        className="rounded text-purple-600"
+                      />
                       <span className="text-sm text-gray-700">Allow multiple selections</span>
                     </label>
                     <label className="flex items-center gap-2">
-                      <input type="checkbox" className="rounded text-purple-600" />
+                      <input
+                        type="checkbox"
+                        checked={anonymousVoting}
+                        onChange={(e) => setAnonymousVoting(e.target.checked)}
+                        className="rounded text-purple-600"
+                      />
                       <span className="text-sm text-gray-700">Anonymous responses</span>
                     </label>
                   </div>

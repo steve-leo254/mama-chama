@@ -1,7 +1,8 @@
 // src/services/api.ts
 import type {
   Member, Contribution, Loan, Fine, DepositRecord, WithdrawRequest,
-  Transaction, LoanRepaymentRecord, LoanRepayment, MerryGoRoundCycle, MemberStats, Meeting, Notification
+  Transaction, LoanRepaymentRecord, LoanRepayment, MerryGoRoundCycle, MemberStats, Meeting, Notification,
+  Poll, PollOption, PollVote, PollStats
 } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -297,6 +298,40 @@ export const reportsAPI = {
 export const chamaSettingsAPI = {
   get: () => apiClient.get<any>('/settings'),
   update: (data: any) => apiClient.put<any>('/settings', data),
+};
+
+// Polls API
+export const pollsAPI = {
+  // Get all polls
+  list: (status?: string) => apiClient.get<Poll[]>(status ? `/polls?status=${status}` : '/polls'),
+  
+  // Create a new poll
+  create: (data: {
+    title: string;
+    description?: string;
+    allow_multiple_votes: boolean;
+    anonymous_voting: boolean;
+    end_date?: string;
+    options: Array<{ option_text: string; option_order: number }>;
+  }) => apiClient.post<Poll>('/polls', data),
+  
+  // Get a specific poll
+  get: (id: string) => apiClient.get<Poll>(`/polls/${id}`),
+  
+  // Update a poll
+  update: (id: string, data: Partial<Poll>) => apiClient.put<Poll>(`/polls/${id}`, data),
+  
+  // Delete a poll
+  delete: (id: string) => apiClient.delete(`/polls/${id}`),
+  
+  // Vote in a poll
+  vote: (pollId: string, optionIds: string[]) => apiClient.post<PollVote>(`/polls/${pollId}/vote`, {
+    poll_id: pollId,
+    option_ids: optionIds
+  }),
+  
+  // Get poll statistics
+  getStats: (id: string) => apiClient.get<PollStats>(`/polls/${id}/stats`),
 };
 
 export default apiClient;

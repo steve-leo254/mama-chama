@@ -2,9 +2,10 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import ChatInterface from '../components/chat/ChatInterface';
+import PollViewer from '../components/polls/PollViewer';
 import {
   MessageCircle, PenSquare, Search, X, Users,
-  Filter, MessageSquare, CheckCheck, Inbox, Send, Star, Archive, Trash2, ChevronLeft, MailOpen
+  Filter, CheckCheck, Inbox, Send, Star, Archive, Trash2, ChevronLeft, MailOpen, BarChart3
 } from 'lucide-react';
 import type { Member, Message, MessageFolder } from '../types';
 
@@ -427,9 +428,17 @@ export default function MemberChat() {
                                 {message.time}
                               </span>
                             </div>
-                            <h4 className={`text-sm ${message.read ? 'font-medium text-gray-700' : 'font-semibold text-gray-900'} truncate mb-1`}>
-                              {message.subject}
-                            </h4>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className={`text-sm ${message.read ? 'font-medium text-gray-700' : 'font-semibold text-gray-900'} truncate`}>
+                                {message.subject}
+                              </h4>
+                              {message.labels?.includes('poll') && (
+                                <div className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
+                                  <BarChart3 className="w-3 h-3" />
+                                  <span className="text-xs font-medium">Poll</span>
+                                </div>
+                              )}
+                            </div>
                             <p className="text-xs text-gray-600 truncate">
                               {message.preview}
                             </p>
@@ -473,9 +482,16 @@ export default function MemberChat() {
                 
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-3">{selectedMessage.subject}</h2>
-                  <div className="prose prose-sm max-w-none">
-                    <p className="text-gray-700 whitespace-pre-wrap">{selectedMessage.body}</p>
-                  </div>
+                  
+                  {/* Poll Viewer */}
+                  {selectedMessage.labels?.includes('poll') && <PollViewer message={selectedMessage} />}
+                  
+                  {/* Regular Message Body */}
+                  {!selectedMessage.labels?.includes('poll') && (
+                    <div className="prose prose-sm max-w-none">
+                      <p className="text-gray-700 whitespace-pre-wrap">{selectedMessage.body}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-gray-100">

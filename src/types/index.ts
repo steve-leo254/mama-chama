@@ -152,6 +152,7 @@ export interface ChamaStats {
 
 export interface MemberStats {
   totalContributed: number;
+  extraSavings: number;
   totalFines: number;
   finesPaid: number;
   finesUnpaid: number;
@@ -236,10 +237,63 @@ export interface Message {
       id: string;
       name: string;
       avatar: string;
+      role: string;
     };
     body: string;
     date: string;
     time: string;
-    attachments: MessageAttachment[];
+    attachments?: MessageAttachment[];
   }>;
+}
+
+// ========================
+// POLL TYPES
+// ========================
+
+export interface Poll {
+  id: string;
+  title: string;
+  description?: string;
+  creator_id: string;
+  creator_name?: string;
+  status: 'active' | 'closed' | 'draft';
+  allow_multiple_votes: boolean;
+  anonymous_voting: boolean;
+  end_date?: string;
+  total_votes: number;
+  options: PollOption[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PollOption {
+  id: string;
+  poll_id: string;
+  option_text: string;
+  option_order: number;
+  vote_count: number;
+  created_at: string;
+}
+
+export interface PollVote {
+  id: string;
+  poll_id: string;
+  option_id: string;
+  option_text?: string;
+  voter_id: string;
+  voter_name?: string;
+  voted_at: string;
+}
+
+export interface PollStats {
+  poll_id: string;
+  total_votes: number;
+  option_stats: Array<{
+    option_id: string;
+    option_text: string;
+    vote_count: number;
+    percentage: number;
+  }>;
+  user_voted: boolean;
+  user_votes: string[];
 }

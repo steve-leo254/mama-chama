@@ -48,7 +48,7 @@ export default function NotificationsPage() {
       filtered = filtered.filter(m =>
         m.subject.toLowerCase().includes(s) ||
         m.preview.toLowerCase().includes(s) ||
-        (m.from && m.from.name.toLowerCase().includes(s))
+        (m.from_user && m.from_user.name.toLowerCase().includes(s))
       );
     }
     return filtered.sort((a, b) => new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime());

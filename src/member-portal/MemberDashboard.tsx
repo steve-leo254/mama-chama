@@ -9,6 +9,7 @@ export default function MemberDashboard() {
   const { currentUser, getMemberStats, getMemberTransactions, getMemberLoans, getMemberFines, meetings } = useApp();
   const [stats, setStats] = useState<any>({
     totalContributed: 0,
+    extraSavings: 0,
     totalFines: 0,
     finesPaid: 0,
     finesUnpaid: 0,
@@ -46,7 +47,7 @@ export default function MemberDashboard() {
   // Use API data for all values
   const actualSavings = stats.savingsBalance || 0;
   const actualLoanBalance = stats.activeLoanBalance || 0;
-  const actualTotalContributed = stats.totalContributed || 0;
+  const actualTotalContributed = (stats.totalContributed || 0) + (stats.extraSavings || 0);
   const actualUnpaidFines = stats.finesUnpaid || 0;
 
   return (
@@ -100,6 +101,7 @@ export default function MemberDashboard() {
             <div>
               <p className="text-xs text-gray-500">My Contributions</p>
               <p className="text-lg font-bold text-gray-900">KES {(stats.totalContributed || 0).toLocaleString()}</p>
+              <p className="text-xs text-emerald-600 mt-1">+ KES {(stats.extraSavings || 0).toLocaleString()} extra savings</p>
             </div>
           </div>
           <div className="flex items-center gap-1 text-xs text-emerald-600">
