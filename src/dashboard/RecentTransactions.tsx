@@ -1,9 +1,11 @@
 // src/components/dashboard/RecentTransactions.tsx
 import { ArrowUpRight, ArrowDownLeft, RefreshCw, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export default function RecentTransactions() {
   const { transactions, dataLoading } = useApp();
+  const navigate = useNavigate();
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -31,7 +33,15 @@ export default function RecentTransactions() {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm shadow-black/5 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-gray-900">Recent Transactions</h3>
-        <button className="text-sm text-primary-600 font-medium hover:text-primary-700">View All</button>
+        <button 
+          onClick={() => {
+            console.log('View All clicked');
+            navigate('/deposit-management');
+          }}
+          className="text-sm text-primary-600 font-medium hover:text-primary-700 cursor-pointer transition-colors"
+        >
+          View All
+        </button>
       </div>
       
       {dataLoading ? (

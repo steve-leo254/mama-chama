@@ -1,0 +1,115 @@
+/* Print styles for Transaction Management */
+@media print {
+  /* Hide unnecessary elements */
+  .btn-secondary,
+  button,
+  .flex.gap-2,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure the content takes full width */
+  #transaction-content {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Remove backgrounds and shadows for printing */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure proper text formatting */
+  body {
+    font-size: 12px;
+    line-height: 1.4;
+    color: black !important;
+    background: white !important;
+  }
+
+  /* Table styles for printing */
+  table {
+    width: 100% !important;
+    border-collapse: collapse;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #e5e7eb !important;
+    padding: 8px !important;
+  }
+
+  th {
+    background: #f9fafb !important;
+    font-weight: bold;
+  }
+
+  /* Hide the last column (Actions) */
+  th:last-child,
+  td:last-child {
+    display: none !important;
+  }
+
+  /* Ensure proper spacing */
+  .space-y-6 > * {
+    margin-bottom: 1rem;
+  }
+
+  /* Stats cards adjustments */
+  .grid > div {
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  /* Print-friendly colors - force black text */
+  * {
+    color: black !important;
+  }
+
+  /* Keep borders visible */
+  .border,
+  [class*="border"] {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Ensure headers print properly */
+  h1, h2, h3 {
+    color: black !important;
+    page-break-after: avoid;
+    font-weight: bold;
+  }
+
+  /* Hide filter section specifically */
+  .card:has(.Search) {
+    display: none !important;
+  }
+
+  /* Member avatars */
+  .w-8.h-8.rounded-full {
+    border: 1px solid #e5e7eb !important;
+    background: white !important;
+  }
+
+  /* Status badges */
+  .inline-flex,
+  [class*="inline-flex"] {
+    border: 1px solid #e5e7eb !important;
+    background: white !important;
+  }
+
+  /* Add spacing between sections */
+  .space-y-6 > * + * {
+    margin-top: 1.5rem;
+  }
+
+  /* Ensure text is visible */
+  .text-sm,
+  .text-xs,
+  .text-lg,
+  .text-2xl {
+    color: black !important;
+  }
+}

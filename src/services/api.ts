@@ -178,6 +178,13 @@ export const finesAPI = {
 export const depositsAPI = {
   list: (member_id?: string) =>
     apiClient.get<DepositRecord[]>(`/deposits${member_id ? `?member_id=${member_id}` : ''}`),
+  listAll: (status?: string, type?: string) => {
+    const params = new URLSearchParams();
+    if (status && status !== 'all') params.append('status', status);
+    if (type && type !== 'all') params.append('deposit_type', type);
+    const queryString = params.toString();
+    return apiClient.get<DepositRecord[]>(`/admin/deposits${queryString ? `?${queryString}` : ''}`);
+  },
   create: (data: any) => apiClient.post<DepositRecord>('/deposits', data),
 };
 

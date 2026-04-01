@@ -18,7 +18,7 @@ export default function WalletOverview() {
 
   // Calculate Total In (money coming into chama)
   const totalIn: number = safeTransactions
-    .filter((t: Transaction) => ['contribution', 'loan_repayment', 'penalty', 'interest', 'fine_payment'].includes(t.type))
+    .filter((t: Transaction) => ['contribution', 'deposit', 'loan_repayment', 'penalty', 'interest', 'fine_payment'].includes(t.type))
     .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
 
   // Calculate Total Out (money going out from chama)

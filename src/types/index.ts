@@ -5,7 +5,7 @@ export interface Member {
   email: string;
   phone: string;
   avatar: string;
-  role: 'admin' | 'treasurer' | 'secretary' | 'member';
+  role: 'admin' | 'ADMIN' | 'treasurer' | 'TREASURER' | 'secretary' | 'SECRETARY' | 'member' | 'MEMBER';
   joinDate: string;
   totalContributed: number;
   totalBorrowed: number;

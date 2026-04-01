@@ -14,6 +14,7 @@ import Meetings from './pages/Meetings';
 import WalletPage from './pages/Wallet';
 import MerryGoRound from './pages/MerryGoRound';
 import Settings from './pages/Settings';
+import AdminDepositManagement from './admin/deposit-management/DepositManagement';
 
 // Member Layout & Pages
 import MemberLayout from './member-portal/MemberLayout';
@@ -127,6 +128,7 @@ function AppContent() {
             <Route path="/merry-go-round" element={<MerryGoRound />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/chat" element={<ChatList />} />
+            <Route path="/deposit-management" element={<AdminDepositManagement />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Dashboard />} />
           </Route>
