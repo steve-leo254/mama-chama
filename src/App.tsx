@@ -24,6 +24,7 @@ import MemberGroupReportsPage from './pages/member/MemberGroupReportsPage';
 import MemberMyReportsPage from './pages/member/MemberMyReportsPage';
 import MemberMyLoansPage from './pages/member/MemberMyLoansPage';
 import MemberProfilePage from './pages/member/MemberProfilePage';
+import MerryGoRoundPage from './member-portal/merry-go-round/MerryGoRoundPage';
 
 // Auth
 import LoginPage from './auth/LoginPage';
@@ -140,6 +141,7 @@ function AppContent() {
             <Route path="/member/group-reports" element={<MemberGroupReportsPage />} />
             <Route path="/member/my-reports" element={<MemberMyReportsPage />} />
             <Route path="/member/my-loans" element={<MemberMyLoansPage />} />
+            <Route path="/member/merry-go-round" element={<MerryGoRoundPage />} />
             <Route path="/member/notifications" element={<MyNotifications />} />
             <Route path="/member/chat" element={<MemberChat />} />
             <Route path="/member/profile" element={<MemberProfilePage />} />

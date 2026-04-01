@@ -2,7 +2,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, BarChart3,
-  FileText, HandCoins, User, Bell, MessageCircle, LogOut
+  FileText, HandCoins, User, Bell, MessageCircle, LogOut, RotateCcw
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/member/group-reports', icon: BarChart3, label: 'Group Reports' },
   { to: '/member/my-reports', icon: FileText, label: 'My Reports' },
   { to: '/member/my-loans', icon: HandCoins, label: 'My Loans' },
+  { to: '/member/merry-go-round', icon: RotateCcw, label: 'Merry-Go-Round' },
   { to: '/member/notifications', icon: Bell, label: 'My Notifications' },
   { to: '/member/chat', icon: MessageCircle, label: 'Chat' },
   { to: '/member/profile', icon: User, label: 'My Profile' },

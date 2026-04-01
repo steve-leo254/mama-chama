@@ -93,10 +93,10 @@ export default function MyReports() {
       const cardHeight = 25;
       const cardSpacing = 5;
       const summaryData = [
-        { label: 'Total Contributed', value: `KES ${stats.totalContributed.toLocaleString()}`, color: colors.primary },
-        { label: 'Total Borrowed', value: `KES ${stats.activeLoanBalance.toLocaleString()}`, color: colors.accent },
-        { label: 'Total Fines', value: `KES ${stats.totalFines.toLocaleString()}`, color: colors.danger },
-        { label: 'Net Balance', value: `KES ${stats.savingsBalance.toLocaleString()}`, color: colors.secondary },
+        { label: 'Total Contributed', value: `KES ${stats?.totalContributed?.toLocaleString() || 0}`, color: colors.primary },
+        { label: 'Total Borrowed', value: `KES ${stats?.activeLoanBalance?.toLocaleString() || 0}`, color: colors.accent },
+        { label: 'Total Fines', value: `KES ${stats?.totalFines?.toLocaleString() || 0}`, color: colors.danger },
+        { label: 'Net Balance', value: `KES ${stats?.savingsBalance?.toLocaleString() || 0}`, color: colors.secondary },
       ];
 
       summaryData.forEach((card, index) => {
@@ -312,19 +312,19 @@ export default function MyReports() {
       if (activeTab === 'all') {
         doc.text('Net Balance:', 15, finalY + 10);
         doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
-        doc.text(`KES ${stats.savingsBalance.toLocaleString()}`, 15, finalY + 16);
+        doc.text(`KES ${stats?.savingsBalance?.toLocaleString() || 0}`, 15, finalY + 16);
       } else if (activeTab === 'contributions') {
         doc.text('Total Contributed:', 15, finalY + 10);
         doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-        doc.text(`KES ${stats.totalContributed.toLocaleString()}`, 15, finalY + 16);
+        doc.text(`KES ${stats?.totalContributed?.toLocaleString() || 0}`, 15, finalY + 16);
       } else if (activeTab === 'fines') {
         doc.text('Outstanding Fines:', 15, finalY + 10);
         doc.setTextColor(colors.danger[0], colors.danger[1], colors.danger[2]);
-        doc.text(`KES ${stats.finesUnpaid.toLocaleString()}`, 15, finalY + 16);
+        doc.text(`KES ${stats?.finesUnpaid?.toLocaleString() || 0}`, 15, finalY + 16);
       } else if (activeTab === 'loans') {
         doc.text('Outstanding Loan Balance:', 15, finalY + 10);
         doc.setTextColor(colors.accent[0], colors.accent[1], colors.accent[2]);
-        doc.text(`KES ${stats.activeLoanBalance.toLocaleString()}`, 15, finalY + 16);
+        doc.text(`KES ${stats?.activeLoanBalance?.toLocaleString() || 0}`, 15, finalY + 16);
       }
     }
 
@@ -349,19 +349,19 @@ export default function MyReports() {
         <div class="summary-grid">
           <div class="summary-card emerald">
             <div class="summary-label">Total Contributed</div>
-            <div class="summary-value">KES ${stats.totalContributed.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.totalContributed?.toLocaleString() || 0}</div>
           </div>
           <div class="summary-card amber">
             <div class="summary-label">Total Borrowed</div>
-            <div class="summary-value">KES ${stats.activeLoanBalance.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.activeLoanBalance?.toLocaleString() || 0}</div>
           </div>
           <div class="summary-card rose">
             <div class="summary-label">Total Fines</div>
-            <div class="summary-value">KES ${stats.totalFines.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.totalFines?.toLocaleString() || 0}</div>
           </div>
           <div class="summary-card blue">
             <div class="summary-label">Net Balance</div>
-            <div class="summary-value">KES ${stats.savingsBalance.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.savingsBalance?.toLocaleString() || 0}</div>
           </div>
         </div>
       `;
@@ -409,7 +409,7 @@ export default function MyReports() {
           <tfoot>
             <tr class="total-row">
               <td colspan="3"><strong>NET BALANCE</strong></td>
-              <td colspan="2" class="balance"><strong>KES ${stats.savingsBalance.toLocaleString()}</strong></td>
+              <td colspan="2" class="balance"><strong>KES ${stats?.savingsBalance?.toLocaleString() || 0}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -420,7 +420,7 @@ export default function MyReports() {
         <div class="summary-grid">
           <div class="summary-card emerald">
             <div class="summary-label">Total Contributed</div>
-            <div class="summary-value">KES ${stats.totalContributed.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.totalContributed?.toLocaleString() || 0}</div>
           </div>
           <div class="summary-card">
             <div class="summary-label">Monthly Contributions</div>
@@ -432,7 +432,7 @@ export default function MyReports() {
           </div>
           <div class="summary-card blue">
             <div class="summary-label">Contribution Streak</div>
-            <div class="summary-value">${stats.contributionStreak} months</div>
+            <div class="summary-value">${stats?.contributionStreak || 0} months</div>
           </div>
         </div>
       `;
@@ -472,7 +472,7 @@ export default function MyReports() {
           <tfoot>
             <tr class="total-row">
               <td colspan="4"><strong>TOTAL</strong></td>
-              <td colspan="3" class="balance"><strong>KES ${stats.totalContributed.toLocaleString()}</strong></td>
+              <td colspan="3" class="balance"><strong>KES ${stats?.totalContributed?.toLocaleString() || 0}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -483,15 +483,15 @@ export default function MyReports() {
         <div class="summary-grid">
           <div class="summary-card">
             <div class="summary-label">Total Fines</div>
-            <div class="summary-value">KES ${stats.totalFines.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.totalFines?.toLocaleString() || 0}</div>
           </div>
           <div class="summary-card emerald">
             <div class="summary-label">Paid</div>
-            <div class="summary-value">KES ${stats.finesPaid.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.finesPaid?.toLocaleString() || 0}</div>
           </div>
           <div class="summary-card rose">
             <div class="summary-label">Outstanding</div>
-            <div class="summary-value">KES ${stats.finesUnpaid.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.finesUnpaid?.toLocaleString() || 0}</div>
           </div>
         </div>
       `;
@@ -523,8 +523,8 @@ export default function MyReports() {
           <tfoot>
             <tr class="total-row">
               <td colspan="3"><strong>TOTALS</strong></td>
-              <td class="negative"><strong>KES ${stats.totalFines.toLocaleString()}</strong></td>
-              <td colspan="2"><strong>Outstanding: KES ${stats.finesUnpaid.toLocaleString()}</strong></td>
+              <td class="negative"><strong>KES ${stats?.totalFines?.toLocaleString() || 0}</strong></td>
+              <td colspan="2"><strong>Outstanding: KES ${stats?.finesUnpaid?.toLocaleString() || 0}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -535,7 +535,7 @@ export default function MyReports() {
         <div class="summary-grid">
           <div class="summary-card">
             <div class="summary-label">Total Loans Taken</div>
-            <div class="summary-value">${stats.totalLoansTaken}</div>
+            <div class="summary-value">${stats?.totalLoansTaken || 0}</div>
           </div>
           <div class="summary-card amber">
             <div class="summary-label">Active Loans</div>
@@ -543,7 +543,7 @@ export default function MyReports() {
           </div>
           <div class="summary-card rose">
             <div class="summary-label">Outstanding Balance</div>
-            <div class="summary-value">KES ${stats.activeLoanBalance.toLocaleString()}</div>
+            <div class="summary-value">KES ${stats?.activeLoanBalance?.toLocaleString() || 0}</div>
           </div>
           <div class="summary-card emerald">
             <div class="summary-label">Completed</div>
@@ -947,17 +947,6 @@ export default function MyReports() {
 
   if (!currentUser || !stats) return null;
 
-  if (stats && typeof stats.totalContributed === 'undefined') {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading your reports...</p>
-        </div>
-      </div>
-    );
-  }
-
   const myContributions = getMemberContributions(currentUser.id).sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -966,6 +955,76 @@ export default function MyReports() {
   );
   const myLoans = getMemberLoans(currentUser.id);
   const myRepayments = getMemberLoanRepayments(currentUser.id);
+  const myTransactions = getMemberTransactions(currentUser.id).sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  // Utility functions
+  const getTransactionIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'contribution':
+        return <PiggyBank className="w-4 h-4 text-emerald-600" />;
+      case 'loan_disbursement':
+        return <HandCoins className="w-4 h-4 text-amber-600" />;
+      case 'loan_repayment':
+        return <ArrowUpRight className="w-4 h-4 text-blue-600" />;
+      case 'penalty':
+      case 'fine_payment':
+        return <AlertTriangle className="w-4 h-4 text-rose-600" />;
+      case 'interest':
+        return <ArrowDownLeft className="w-4 h-4 text-purple-600" />;
+      case 'merry_go_round':
+        return <List className="w-4 h-4 text-indigo-600" />;
+      case 'deposit':
+        return <ArrowUpRight className="w-4 h-4 text-emerald-600" />;
+      case 'withdrawal':
+        return <ArrowDownLeft className="w-4 h-4 text-rose-600" />;
+      default:
+        return <List className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getTransactionAmount = (transaction: any) => {
+    const isPositive = transaction.direction === 'in' || 
+                     transaction.type === 'contribution' || 
+                     transaction.type === 'loan_repayment' ||
+                     transaction.type === 'deposit' ||
+                     transaction.type === 'interest';
+    const colorClass = isPositive ? 'text-emerald-700' : 'text-rose-700';
+    const prefix = isPositive ? '+' : '-';
+    
+    return (
+      <span className={colorClass}>
+        {prefix}KES {Math.abs(transaction.amount).toLocaleString()}
+      </span>
+    );
+  };
+
+  // Calculate contributions with running balance
+  let contribRunning = 0;
+  const contribsWithBalance = [...myContributions].reverse().map(c => {
+    if (c.status === 'completed') contribRunning += c.amount;
+    return { ...c, runningBalance: contribRunning } as (typeof c & { runningBalance: number });
+  }).reverse();
+
+  // Calculate totals from actual transactions
+  const totalContributed = myTransactions
+    .filter(t => t.type === 'contribution')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalDeposits = myTransactions
+    .filter(t => t.type === 'deposit')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalBorrowed = myTransactions
+    .filter(t => t.type === 'loan_disbursement')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalFines = myTransactions
+    .filter(t => t.type === 'penalty' || t.type === 'fine_payment')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const netBalance = (totalContributed + totalDeposits) - totalBorrowed - totalFines;
 
   const tabs = [
     { key: 'all' as const, label: 'All Transactions', icon: List },
@@ -973,12 +1032,6 @@ export default function MyReports() {
     { key: 'fines' as const, label: 'Fine Statement', icon: AlertTriangle },
     { key: 'loans' as const, label: 'Loan Statement', icon: HandCoins },
   ];
-
-  let contribRunning = 0;
-  const contribsWithBalance = [...myContributions].reverse().map(c => {
-    if (c.status === 'completed') contribRunning += c.amount;
-    return { ...c, runningBalance: contribRunning } as (typeof c & { runningBalance: number });
-  }).reverse();
 
   return (
     <div className="animate-fade-in">
@@ -1030,19 +1083,19 @@ export default function MyReports() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Total Contributed</p>
-                <p className="text-lg font-bold text-emerald-700">KES {stats.totalContributed.toLocaleString()}</p>
+                <p className="text-lg font-bold text-emerald-700">KES {totalContributed.toLocaleString()}</p>
+              </div>
+              <div className="bg-white rounded-xl p-3">
+                <p className="text-xs text-gray-500">Total Deposits</p>
+                <p className="text-lg font-bold text-blue-700">KES {totalDeposits.toLocaleString()}</p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Total Borrowed</p>
-                <p className="text-lg font-bold text-amber-700">KES {stats.activeLoanBalance.toLocaleString()}</p>
-              </div>
-              <div className="bg-white rounded-xl p-3">
-                <p className="text-xs text-gray-500">Total Fines</p>
-                <p className="text-lg font-bold text-rose-700">KES {stats.totalFines.toLocaleString()}</p>
+                <p className="text-lg font-bold text-amber-700">KES {totalBorrowed.toLocaleString()}</p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Net Balance</p>
-                <p className="text-lg font-bold text-blue-700">KES {stats.savingsBalance.toLocaleString()}</p>
+                <p className="text-lg font-bold text-purple-700">KES {netBalance.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -1067,83 +1120,27 @@ export default function MyReports() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {/* Contributions */}
-                  {myContributions.map(c => (
-                    <tr key={`contrib-${c.id}`} className="hover:bg-emerald-50/30">
-                      <td className="px-6 py-3 text-sm text-gray-900">{c.date}</td>
+                  {myTransactions.map((transaction) => (
+                    <tr key={`transaction-${transaction.id}`} className="hover:bg-gray-50/30">
+                      <td className="px-6 py-3 text-sm text-gray-900">{transaction.date}</td>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
-                          <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-                          <Badge variant={c.type === 'monthly' ? 'info' : c.type === 'special' ? 'purple' : 'warning'} size="sm">
-                            Contribution
-                          </Badge>
+                          {getTransactionIcon(transaction.type)}
+                          <span className="text-xs text-gray-600 capitalize">{transaction.type.replace('_', ' ')}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-600">{c.month} - {c.type}</td>
-                      <td className="px-6 py-3 text-sm font-semibold text-emerald-600 text-right">
-                        +KES {c.amount.toLocaleString()}
+                      <td className="px-6 py-3 text-sm text-gray-600">{transaction.description}</td>
+                      <td className="px-6 py-3 text-sm font-semibold text-right">
+                        {getTransactionAmount(transaction)}
                       </td>
                       <td className="px-6 py-3 text-center">
-                        <Badge variant={c.status === 'completed' ? 'success' : 'warning'}>
-                          {c.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                  
-                  {/* Loans */}
-                  {myLoans.map(l => (
-                    <tr key={`loan-${l.id}`} className="hover:bg-amber-50/30">
-                      <td className="px-6 py-3 text-sm text-gray-900">{l.application_date}</td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <ArrowDownLeft className="w-4 h-4 text-amber-600" />
-                          <Badge variant="warning" size="sm">Loan</Badge>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-sm text-gray-600">{l.purpose}</td>
-                      <td className="px-6 py-3 text-sm font-semibold text-amber-600 text-right">
-                        -KES {l.amount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-3 text-center">
-                        <Badge variant={l.status === 'active' ? 'warning' : l.status === 'completed' ? 'success' : 'info'}>
-                          {l.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                  
-                  {/* Fines */}
-                  {myFines.map(f => (
-                    <tr key={`fine-${f.id}`} className="hover:bg-rose-50/30">
-                      <td className="px-6 py-3 text-sm text-gray-900">{f.date}</td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-rose-600" />
-                          <Badge variant="danger" size="sm">Fine</Badge>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-sm text-gray-600">{f.reason}</td>
-                      <td className="px-6 py-3 text-sm font-semibold text-rose-600 text-right">
-                        -KES {f.amount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-3 text-center">
-                        <Badge variant={f.status === 'paid' ? 'success' : 'danger'}>
-                          {f.status}
+                        <Badge variant="success">
+                          Completed
                         </Badge>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-gray-200 bg-gray-50">
-                    <td colSpan={3} className="px-6 py-3 text-sm font-bold text-gray-700">NET BALANCE</td>
-                    <td className="px-6 py-3 text-sm font-bold text-blue-700 text-right">
-                      KES {stats.savingsBalance.toLocaleString()}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
               </table>
             </div>
           </div>
@@ -1166,7 +1163,7 @@ export default function MyReports() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Total Contributed</p>
-                <p className="text-lg font-bold text-emerald-700">KES {stats.totalContributed.toLocaleString()}</p>
+                <p className="text-lg font-bold text-emerald-700">KES {stats?.totalContributed?.toLocaleString() || 0}</p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Monthly Contributions</p>
@@ -1182,7 +1179,7 @@ export default function MyReports() {
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Contribution Streak</p>
-                <p className="text-lg font-bold text-primary-700">{stats.contributionStreak} months</p>
+                <p className="text-lg font-bold text-primary-700">{stats?.contributionStreak || 0} months</p>
               </div>
             </div>
           </div>
@@ -1239,11 +1236,11 @@ export default function MyReports() {
                   <tr className="border-t-2 border-gray-200 bg-gray-50">
                     <td colSpan={5} className="px-6 py-3 text-sm font-bold text-gray-700">TOTAL</td>
                     <td className="px-6 py-3 text-sm font-bold text-emerald-700 text-right">
-                      KES {stats.totalContributed.toLocaleString()}
+                      KES {stats?.totalContributed?.toLocaleString() || 0}
                     </td>
                     <td></td>
                     <td className="px-6 py-3 text-sm font-bold text-emerald-700 text-right hidden lg:table-cell">
-                      KES {stats.totalContributed.toLocaleString()}
+                      KES {stats?.totalContributed?.toLocaleString() || 0}
                     </td>
                   </tr>
                 </tfoot>
@@ -1268,15 +1265,15 @@ export default function MyReports() {
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Total Fines</p>
-                <p className="text-lg font-bold text-gray-900">KES {stats.totalFines.toLocaleString()}</p>
+                <p className="text-lg font-bold text-gray-900">KES {stats?.totalFines?.toLocaleString() || 0}</p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Paid</p>
-                <p className="text-lg font-bold text-emerald-700">KES {stats.finesPaid.toLocaleString()}</p>
+                <p className="text-lg font-bold text-emerald-700">KES {stats?.finesPaid?.toLocaleString() || 0}</p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Outstanding</p>
-                <p className="text-lg font-bold text-rose-700">KES {stats.finesUnpaid.toLocaleString()}</p>
+                <p className="text-lg font-bold text-rose-700">KES {stats?.finesUnpaid?.toLocaleString() || 0}</p>
               </div>
             </div>
           </div>
@@ -1323,10 +1320,10 @@ export default function MyReports() {
                   <tr className="border-t-2 border-gray-200 bg-gray-50">
                     <td colSpan={3} className="px-6 py-3 text-sm font-bold text-gray-700">TOTALS</td>
                     <td className="px-6 py-3 text-sm font-bold text-gray-900 text-right">
-                      KES {stats.totalFines.toLocaleString()}
+                      KES {stats?.totalFines?.toLocaleString() || 0}
                     </td>
                     <td colSpan={2} className="px-6 py-3 text-sm text-gray-600 text-center">
-                      Outstanding: <span className="font-bold text-rose-600">KES {stats.finesUnpaid}</span>
+                      Outstanding: <span className="font-bold text-rose-600">KES {stats?.finesUnpaid?.toLocaleString() || 0}</span>
                     </td>
                   </tr>
                 </tfoot>
@@ -1351,7 +1348,7 @@ export default function MyReports() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Total Loans Taken</p>
-                <p className="text-lg font-bold text-gray-900">{stats.totalLoansTaken}</p>
+                <p className="text-lg font-bold text-gray-900">{stats?.totalLoansTaken || 0}</p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Active Loans</p>
@@ -1361,7 +1358,7 @@ export default function MyReports() {
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Outstanding Balance</p>
-                <p className="text-lg font-bold text-rose-700">KES {stats.activeLoanBalance.toLocaleString()}</p>
+                <p className="text-lg font-bold text-rose-700">KES {stats?.activeLoanBalance?.toLocaleString() || 0}</p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">Completed</p>
