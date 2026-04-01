@@ -123,7 +123,7 @@ export default function MemberProfile() {
             <Badge variant="info">{currentUser.role}</Badge>
           </div>
           <p className="text-sm text-gray-500 mt-3">
-            Member since {new Date(currentUser.join_date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}
+            Member since {currentUser.join_date ? new Date(currentUser.join_date).toLocaleDateString('en', { month: 'long', year: 'numeric' }) : 'Unknown'}
           </p>
 
           <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">

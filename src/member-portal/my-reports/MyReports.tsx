@@ -1009,7 +1009,7 @@ export default function MyReports() {
 
   // Calculate totals from actual transactions
   const totalContributed = myTransactions
-    .filter(t => t.type === 'contribution')
+    .filter(t => t.type === 'contribution' || t.type === 'deposit')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const totalDeposits = myTransactions
@@ -1163,7 +1163,7 @@ export default function MyReports() {
               <FileText className="w-6 h-6 text-emerald-600" />
               <div>
                 <h3 className="font-bold text-gray-900">Contribution Statement</h3>
-                <p className="text-sm text-gray-500">{currentUser.name} • Member since {currentUser.join_date}</p>
+                <p className="text-sm text-gray-500">{currentUser.name} • Member since {currentUser.join_date ? new Date(currentUser.join_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown'}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
