@@ -123,7 +123,7 @@ export default function MemberProfile() {
             <Badge variant="info">{currentUser.role}</Badge>
           </div>
           <p className="text-sm text-gray-500 mt-3">
-            Member since {new Date(currentUser.joinDate).toLocaleDateString('en', { month: 'long', year: 'numeric' })}
+            Member since {new Date(currentUser.join_date).toLocaleDateString('en', { month: 'long', year: 'numeric' })}
           </p>
 
           <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
@@ -137,11 +137,11 @@ export default function MemberProfile() {
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <CreditCard className="w-4 h-4 text-gray-400" />
-              <span>ID: {currentUser.nationalId}</span>
+              <span>ID: {currentUser.national_id || 'Not provided'}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <User className="w-4 h-4 text-gray-400" />
-              <span>Next of Kin: {currentUser.nextOfKin}</span>
+              <span>Next of Kin: {currentUser.next_of_kin || 'Not provided'}</span>
             </div>
           </div>
 
@@ -201,12 +201,12 @@ export default function MemberProfile() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">National ID</label>
-                  <input type="text" defaultValue={currentUser.nationalId} className="input-field" />
+                  <input type="text" defaultValue={currentUser.national_id || ''} className="input-field" placeholder="Enter national ID" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Next of Kin</label>
-                <input type="text" defaultValue={currentUser.nextOfKin} className="input-field" />
+                <input type="text" defaultValue={currentUser.next_of_kin || ''} className="input-field" placeholder="Enter next of kin" />
               </div>
               <button className="btn-primary flex items-center gap-2">
                 <Save className="w-4 h-4" /> Save Changes

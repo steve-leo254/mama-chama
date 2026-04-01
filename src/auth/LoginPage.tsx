@@ -1,5 +1,5 @@
 // src/components/auth/LoginPage.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
 import { toast } from '../components/ui/Toast';
@@ -8,9 +8,10 @@ import AuthLayout from './AuthLayout.tsx';
 interface LoginPageProps {
   onSwitch: () => void;
   onForgotPassword: () => void;
+  onRegisterAdmin?: () => void;
 }
 
-export default function LoginPage({ onSwitch, onForgotPassword }: LoginPageProps) {
+export default function LoginPage({ onSwitch, onForgotPassword, onRegisterAdmin }: LoginPageProps) {
   const { login } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +19,26 @@ export default function LoginPage({ onSwitch, onForgotPassword }: LoginPageProps
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
+  const [showAdminRegister, setShowAdminRegister] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+
+  // Check if any admins exist
+  useEffect(() => {
+    const checkAdminExists = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/auth/check-admin-exists');
+        const data = await response.json();
+        setShowAdminRegister(!data.has_admins);
+      } catch (error) {
+        console.error('Failed to check admin existence:', error);
+        setShowAdminRegister(false);
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdminExists();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,6 +174,14 @@ export default function LoginPage({ onSwitch, onForgotPassword }: LoginPageProps
           Create Account
         </button>
       </p>
+
+      {onRegisterAdmin && showAdminRegister && (
+        <p className="text-center text-xs text-gray-400 mt-2">
+          <button onClick={onRegisterAdmin} className="text-amber-600 font-medium hover:text-amber-700 hover:underline">
+            Register Admin Account
+          </button>
+        </p>
+      )}
     </AuthLayout>
   );
 }

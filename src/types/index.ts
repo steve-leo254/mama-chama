@@ -6,12 +6,12 @@ export interface Member {
   phone: string;
   avatar: string;
   role: 'admin' | 'ADMIN' | 'treasurer' | 'TREASURER' | 'secretary' | 'SECRETARY' | 'member' | 'MEMBER';
-  joinDate: string;
-  totalContributed: number;
-  totalBorrowed: number;
+  join_date: string;
+  total_contributed: number;
+  total_borrowed: number;
   status: 'active' | 'inactive' | 'suspended';
-  nextOfKin: string;
-  nationalId: string;
+  next_of_kin: string;
+  national_id: string;
   password?: string;
 }
 

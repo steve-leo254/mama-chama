@@ -345,15 +345,46 @@ export default function GroupReports() {
     { name: 'Available', value: stats.availableBalance, color: '#3b82f6' },
   ];
 
-  // Monthly data for trend chart
-  const monthlyData = [
-    { month: 'Jan', collected: 45000, target: 50000 },
-    { month: 'Feb', collected: 48000, target: 50000 },
-    { month: 'Mar', collected: 52000, target: 50000 },
-    { month: 'Apr', collected: 49000, target: 50000 },
-    { month: 'May', collected: 51000, target: 50000 },
-    { month: 'Jun', collected: stats.monthlyCollected, target: stats.monthlyTarget },
-  ];
+  // Monthly data for trend chart - using real data from contributions
+  const getMonthlyData = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyData = [];
+    
+    console.log('All contributions:', contributions);
+    
+    // Get data for all months (Jan-Dec)
+    for (let i = 0; i <= 11; i++) {
+      const monthName = months[i];
+      const monthContributions = contributions.filter(c => {
+        // Flexible month matching - handle different formats
+        const contributionMonth = c.month?.toLowerCase() || '';
+        return (
+          contributionMonth === monthName.toLowerCase() || // Exact match: "Apr"
+          contributionMonth === monthName.toLowerCase() + ' 2026' || // With year: "Apr 2026"
+          contributionMonth.includes(monthName.toLowerCase()) || // Partial match: contains "Apr"
+          (i === 3 && contributionMonth.includes('april')) || // April for month 3
+          (i === 3 && contributionMonth.includes('apr')) // Apr for month 3
+        ) && c.status === 'completed';
+      });
+      const collected = monthContributions.reduce((sum, c) => sum + c.amount, 0);
+      
+      console.log(`Month ${monthName}:`, { 
+        contributionsFound: monthContributions.length, 
+        collected,
+        sampleMonths: monthContributions.map(c => c.month)
+      });
+      
+      monthlyData.push({
+        month: monthName,
+        collected: collected,
+        target: stats.monthlyTarget || 50000
+      });
+    }
+    
+    return monthlyData;
+  };
+
+  const monthlyData = getMonthlyData();
 
   const tabs = [
     { key: 'balances' as const, label: 'Account Balances', icon: Wallet },

@@ -1,8 +1,9 @@
 // src/pages/Settings.tsx
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Save, Shield, Bell, Users, FileText } from 'lucide-react';
-import { chamaSettingsAPI } from '../services/api';
+import { Save, Shield, Bell, Users, FileText, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { chamaSettingsAPI, authAPI } from '../services/api';
+import { toast } from '../components/ui/Toast';
 
 export default function Settings() {
   const {} = useApp();
@@ -17,6 +18,20 @@ export default function Settings() {
     meeting_day: '',
   });
   const [loading, setLoading] = useState(false);
+
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
   // Fetch settings on component mount
   useEffect(() => {
@@ -43,6 +58,73 @@ export default function Settings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Clear previous errors
+    setPasswordErrors({});
+    
+    // Validation
+    const errors: Record<string, string> = {};
+    
+    if (!passwordData.current_password) {
+      errors.current_password = 'Current password is required';
+    }
+    
+    if (!passwordData.new_password) {
+      errors.new_password = 'New password is required';
+    } else if (passwordData.new_password.length < 4) {
+      errors.new_password = 'Password must be at least 4 characters long';
+    }
+    
+    if (!passwordData.confirm_password) {
+      errors.confirm_password = 'Please confirm your new password';
+    } else if (passwordData.new_password !== passwordData.confirm_password) {
+      errors.confirm_password = 'Passwords do not match';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
+      return;
+    }
+    
+    setPasswordLoading(true);
+    try {
+      await authAPI.changePassword({
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password
+      });
+      
+      toast.success('Password Updated', 'Your password has been changed successfully.');
+      
+      // Clear form
+      setPasswordData({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      });
+      
+    } catch (err: any) {
+      console.error('Password change failed:', err);
+      toast.error('Password Change Failed', err.message || 'Failed to change password. Please try again.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const updatePasswordField = (field: keyof typeof passwordData, value: string) => {
+    console.log('Updating password field:', field, value);
+    setPasswordData(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field when user starts typing
+    if (passwordErrors[field]) {
+      setPasswordErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
   const tabs = [
@@ -185,29 +267,95 @@ export default function Settings() {
           {activeTab === 'security' && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm shadow-black/5 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-6">Security Settings</h3>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
-                  <input type="password" className="input-field" placeholder="••••••••" />
+                  <h4 className="text-md font-semibold text-gray-900 mb-4">Change Password</h4>
+                  <form onSubmit={handlePasswordChange} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                      <div className="relative">
+                        <input 
+                          type={showPasswords.current ? 'text' : 'password'}
+                          value={passwordData.current_password}
+                          onChange={(e) => updatePasswordField('current_password', e.target.value)}
+                          className="input-field pr-10"
+                          placeholder="Enter current password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('current')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {passwordErrors.current_password && (
+                        <p className="text-red-500 text-xs mt-1">{passwordErrors.current_password}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                      <div className="relative">
+                        <input 
+                          type={showPasswords.new ? 'text' : 'password'}
+                          value={passwordData.new_password}
+                          onChange={(e) => updatePasswordField('new_password', e.target.value)}
+                          className="input-field pr-10"
+                          placeholder="Enter new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('new')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {passwordErrors.new_password && (
+                        <p className="text-red-500 text-xs mt-1">{passwordErrors.new_password}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                      <div className="relative">
+                        <input 
+                          type={showPasswords.confirm ? 'text' : 'password'}
+                          value={passwordData.confirm_password}
+                          onChange={(e) => updatePasswordField('confirm_password', e.target.value)}
+                          className="input-field pr-10"
+                          placeholder="Confirm new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('confirm')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {passwordErrors.confirm_password && (
+                        <p className="text-red-500 text-xs mt-1">{passwordErrors.confirm_password}</p>
+                      )}
+                    </div>
+                    
+                    <button 
+                      type="submit"
+                      disabled={passwordLoading}
+                      className="btn-primary flex items-center gap-2"
+                    >
+                      <Shield className="w-4 h-4" /> {passwordLoading ? 'Updating...' : 'Update Password'}
+                    </button>
+                  </form>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
-                  <input type="password" className="input-field" placeholder="••••••••" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
-                  <input type="password" className="input-field" placeholder="••••••••" />
-                </div>
-                <button className="btn-primary flex items-center gap-2">
-                  <Shield className="w-4 h-4" /> Update Password
-                </button>
               </div>
             </div>
           )}
 
           {activeTab === 'chama' && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm shadow-black/5 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Chama Constitution Rules</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Chama Constitution</h3>
               <div className="space-y-4">
                 {[
                   { rule: '1. Monthly contributions are due by the 5th of each month' },
@@ -215,7 +363,6 @@ export default function Settings() {
                   { rule: '3. Loans are available up to 3x the member\'s total contribution' },
                   { rule: '4. Loan interest rate is 10% flat rate' },
                   { rule: '5. Every loan requires at least 2 guarantors' },
-                  { rule: '6. Maximum loan repayment period is 12 months' },
                   { rule: '7. Monthly meetings are mandatory; a fine of KES 200 for absence' },
                   { rule: '8. Merry-go-round follows alphabetical order by default' },
                   { rule: '9. A member must have contributed for 3 months before applying for a loan' },

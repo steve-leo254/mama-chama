@@ -29,6 +29,7 @@ import MerryGoRoundPage from './member-portal/merry-go-round/MerryGoRoundPage';
 // Auth
 import LoginPage from './auth/LoginPage';
 import RegisterPage from './auth/RegisterPage';
+import RegisterAdminPage from './auth/RegisterAdminPage';
 import ForgotPasswordPage from './auth/ForgotPasswordPage';
 import ResetPasswordPage from './auth/ResetPasswordPage';
 import TermsPage from './auth/TermsPage';
@@ -40,7 +41,7 @@ import MyNotifications from './member-portal/MyNotifications';
 import MemberChat from './member-portal/MemberChat';
 import ChatList from './components/chat/AdminChatList';
 
-type AuthView = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'terms' | 'verify-email';
+type AuthView = 'login' | 'register' | 'register-admin' | 'forgot-password' | 'reset-password' | 'terms' | 'verify-email';
 
 function AppContent() {
   const { isAuthenticated, portalMode } = useApp();
@@ -58,6 +59,7 @@ function AppContent() {
           <LoginPage
             onSwitch={() => setAuthView('register')}
             onForgotPassword={() => setAuthView('forgot-password')}
+            onRegisterAdmin={() => setAuthView('register-admin')}
           />
         );
 
@@ -74,6 +76,13 @@ function AppContent() {
             }}
             initialStep={registrationState?.step || 1}
             initialData={registrationState?.data || null}
+          />
+        );
+
+      case 'register-admin':
+        return (
+          <RegisterAdminPage
+            onBack={() => setAuthView('login')}
           />
         );
 
@@ -110,6 +119,7 @@ function AppContent() {
           <LoginPage
             onSwitch={() => setAuthView('register')}
             onForgotPassword={() => setAuthView('forgot-password')}
+            onRegisterAdmin={() => setAuthView('register-admin')}
           />
         );
     }
