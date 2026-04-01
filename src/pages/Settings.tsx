@@ -1,7 +1,7 @@
 // src/pages/Settings.tsx
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Save, Shield, Bell, Users, FileText, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Save, Shield, Bell, Users, FileText, Eye, EyeOff } from 'lucide-react';
 import { chamaSettingsAPI, authAPI } from '../services/api';
 import { toast } from '../components/ui/Toast';
 
