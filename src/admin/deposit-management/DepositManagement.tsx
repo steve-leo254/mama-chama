@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, CheckCircle, Clock, XCircle, AlertCircle, TrendingUp, ArrowUpDown, Printer, Download } from 'lucide-react';
 import { depositsAPI, transactionsAPI, withdrawRequestsAPI, loansAPI, finesAPI } from '../../services/api';
-import type { DepositRecord, Transaction } from '../../types';
 import './DepositManagement.css';
 
 interface TransactionStats {

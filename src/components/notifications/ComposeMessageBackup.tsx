@@ -1,11 +1,10 @@
 // src/components/notifications/ComposeMessage.tsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
   X, Send, Paperclip, Bold, Italic, List, Link2,
-  Smile, Minimize2, Maximize2, Trash2, ChevronDown,
-  Image as ImageIcon, FileText, Bell, AlertTriangle, 
-  Users, BarChart3, Plus, Upload, File
+  Smile, Minimize2, Maximize2, Trash2,
+  Image as ImageIcon, FileText, Bell
 } from 'lucide-react';
 import type { Message } from '../../types';
 
@@ -24,22 +23,16 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
     replyTo ? `Re: ${replyTo.subject.replace(/^(Re: |Fwd: )+/, '')}` :
     forwardMessage ? `Fwd: ${forwardMessage.subject.replace(/^(Re: |Fwd: )+/, '')}` : ''
   );
-  const [body, setBody] = useState(
-    forwardMessage ? `<br/><br/>---------- Forwarded message ----------<br/><strong>From:</strong> ${forwardMessage.from?.name || 'Unknown'}<br/><strong>Date:</strong> ${forwardMessage.date}<br/><strong>Subject:</strong> ${forwardMessage.subject}<br/><br/>${forwardMessage.body}` : ''
-  );
+  const body = forwardMessage ? `<br/><br/>---------- Forwarded message ----------<br/><strong>From:</strong> ${forwardMessage.from?.name || 'Unknown'}<br/><strong>Date:</strong> ${forwardMessage.date}<br/><strong>Subject:</strong> ${forwardMessage.subject}<br/><br/>${forwardMessage.body}` : '';
   const [isMinimized, setIsMinimized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showRecipients, setShowRecipients] = useState(false);
   const [sending, setSending] = useState(false);
-  const [detectedCategory, setDetectedCategory] = useState<string>('');
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Phase 2: Rich Communication Features
   const [priority, setPriority] = useState<'urgent' | 'high' | 'normal'>('normal');
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [showPollModal, setShowPollModal] = useState(false);
-  const [showGroupModal, setShowGroupModal] = useState(false);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [messageType, setMessageType] = useState<'message' | 'poll' | 'group'>('message');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -344,7 +337,7 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
                       💬 Message
                     </button>
                     <button
-                      onClick={() => setShowPollModal(true)}
+                      onClick={() => setMessageType('poll')}
                       className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                         messageType === 'poll' 
                           ? 'bg-purple-100 text-purple-700 border border-purple-200' 
@@ -354,7 +347,7 @@ export default function ComposeMessage({ onClose, replyTo, forwardMessage, inlin
                       📊 Poll
                     </button>
                     <button
-                      onClick={() => setShowGroupModal(true)}
+                      onClick={() => setMessageType('group')}
                       className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                         messageType === 'group' 
                           ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' 

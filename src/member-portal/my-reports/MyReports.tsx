@@ -1,7 +1,7 @@
 // src/components/member-portal/my-reports/MyReports.tsx
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
-import { PiggyBank, AlertTriangle, HandCoins, Download, FileText, Printer, ArrowUpRight, ArrowDownLeft, List } from 'lucide-react';
+import { PiggyBank, AlertTriangle, HandCoins, FileText, Printer, ArrowUpRight, ArrowDownLeft, List } from 'lucide-react';
 import Badge from '../../ui/Badge';
 import ProgressBar from '../../ui/ProgressBar';
 import jsPDF from 'jspdf';
@@ -1041,6 +1041,12 @@ export default function MyReports() {
           <p className="text-gray-500 text-sm">Personal financial statements</p>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={handleExportPDF} 
+            className="btn-secondary flex items-center gap-2 text-sm hover:bg-gray-100 transition-all"
+          >
+            <FileText className="w-4 h-4" /> Export PDF
+          </button>
           <button 
             onClick={handlePrint} 
             className="btn-secondary flex items-center gap-2 text-sm hover:bg-gray-100 transition-all"

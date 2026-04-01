@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Badge from '../ui/Badge';
-import { Gift, CheckCircle, Clock, Plus, Calendar, User, DollarSign } from 'lucide-react';
+import { Gift, CheckCircle, Clock, Plus } from 'lucide-react';
 
 export default function MerryGoRound() {
   const { merryGoRoundCycles, members, currentUser } = useApp();

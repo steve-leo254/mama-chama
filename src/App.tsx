@@ -45,7 +45,7 @@ type AuthView = 'login' | 'register' | 'forgot-password' | 'reset-password' | 't
 function AppContent() {
   const { isAuthenticated, portalMode } = useApp();
   const [authView, setAuthView] = useState<AuthView>('login');
-  const [pendingEmail, setPendingEmail] = useState('');
+  const [pendingEmail] = useState('');
   const [registrationState, setRegistrationState] = useState<{
     step: number;
     data: any;
