@@ -31,7 +31,7 @@ export default function MpesaManualPay({
   const [copiedField, setCopiedField] = useState('');
 
   const PAYBILL = '174379';
-  const ACCOUNT = `MC-${currentUser?.nationalId || currentUser?.id || ''}`;
+  const ACCOUNT = `MC-${currentUser?.national_id || currentUser?.id || ''}`;
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);

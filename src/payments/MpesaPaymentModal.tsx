@@ -5,10 +5,9 @@ import MpesaSTKPush from './MpesaSTKPush';
 import MpesaManualPay from './MpesaManualPay';
 import MpesaConfirmation from './MpesaConfirmation';
 import MpesaReceipt from './MpesaReceipt';
-import { Smartphone, FileText, ArrowLeft } from 'lucide-react';
+import { Smartphone, FileText } from 'lucide-react';
 
-export type PaymentType = 'contribution' | 'loan_repayment' | 'fine_payment' | 'savings' | 'registration_fee';
-export type MpesaFlow = 'select' | 'stk_push' | 'manual' | 'processing' | 'success' | 'failed' | 'receipt';
+export type PaymentType = 'contribution' | 'loan_repayment' | 'fine_payment' | 'savings' | 'registration';
 
 export interface PaymentResult {
   transactionId: string;
@@ -16,7 +15,7 @@ export interface PaymentResult {
   amount: number;
   phone: string;
   date: string;
-  paymentType: string;
+  paymentType: PaymentType;
   status: 'completed' | 'failed';
   description: string;
 }
@@ -24,186 +23,130 @@ export interface PaymentResult {
 interface MpesaPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  amount?: number;
-  paymentType?: PaymentType;
+  amount: number;
+  paymentType: PaymentType;
   description?: string;
-  loanId?: string;
-  onSuccess?: (result: PaymentResult) => void;
+  onSuccess: (result: PaymentResult) => void;
   lockedAmount?: boolean;
 }
+
+type Step = 'method' | 'stk' | 'manual' | 'confirmation' | 'receipt';
 
 export default function MpesaPaymentModal({
   isOpen,
   onClose,
-  amount: initialAmount,
-  paymentType = 'contribution',
+  amount,
+  paymentType,
   description,
-  loanId,
   onSuccess,
   lockedAmount = false,
 }: MpesaPaymentModalProps) {
-  const [flow, setFlow] = useState<MpesaFlow>('select');
-  const [amount, setAmount] = useState(initialAmount || 0);
-  const [result, setResult] = useState<PaymentResult | null>(null);
+  const [step, setStep] = useState<Step>('method');
+  const [isProcessing, setProcessing] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+
+  const handleComplete = (result: PaymentResult) => {
+    setPaymentResult(result);
+    setStep('confirmation');
+  };
+
+  const handleViewReceipt = () => {
+    setStep('receipt');
+  };
+
+  const handleRetry = () => {
+    setStep('method');
+    setPaymentResult(null);
+  };
 
   const handleClose = () => {
-    setFlow('select');
-    setResult(null);
+    setStep('method');
+    setPaymentResult(null);
+    setProcessing(false);
     onClose();
   };
 
-  const handlePaymentComplete = (paymentResult: PaymentResult) => {
-    setResult(paymentResult);
-    if (paymentResult.status === 'completed') {
-      setFlow('success');
-      onSuccess?.(paymentResult);
-    } else {
-      setFlow('failed');
+  const handleSuccess = () => {
+    if (paymentResult) {
+      onSuccess(paymentResult);
     }
-  };
-
-  const getTitle = () => {
-    switch (flow) {
-      case 'select': return 'M-Pesa Payment';
-      case 'stk_push': return 'M-Pesa Express';
-      case 'manual': return 'Paybill Payment';
-      case 'processing': return 'Processing Payment';
-      case 'success': return 'Payment Successful';
-      case 'failed': return 'Payment Failed';
-      case 'receipt': return 'Payment Receipt';
-      default: return 'M-Pesa Payment';
-    }
+    handleClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={getTitle()} size={flow === 'receipt' ? 'md' : 'md'}>
-      {/* Method Selection */}
-      {flow === 'select' && (
-        <div className="space-y-6">
-          {/* M-Pesa Logo Area */}
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/30">
-              <span className="text-4xl">📱</span>
-            </div>
-            <p className="text-gray-500 text-sm">Choose how you want to pay</p>
-          </div>
-
-          {/* Amount Display */}
-          {initialAmount && initialAmount > 0 && (
-            <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wider">Amount to Pay</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
-                KES {initialAmount.toLocaleString()}
-              </p>
-              <p className="text-xs text-gray-400 mt-1 capitalize">
-                {paymentType.replace('_', ' ')} {description ? `• ${description}` : ''}
-              </p>
-            </div>
-          )}
-
-          {/* Payment Methods */}
+    <Modal isOpen={isOpen} onClose={handleClose} title="M-Pesa Payment" size="md">
+      {step === 'method' && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500 text-center">Choose your preferred M-Pesa payment method</p>
+          
           <div className="space-y-3">
-            {/* STK Push - Recommended */}
             <button
-              onClick={() => setFlow('stk_push')}
-              className="w-full flex items-start gap-4 p-5 rounded-2xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 hover:border-green-400 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300 text-left group"
+              onClick={() => setStep('stk')}
+              className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 hover:border-green-400 hover:shadow-lg transition-all text-left group"
             >
               <div className="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-lg shadow-green-500/30">
                 <Smartphone className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-gray-900">M-Pesa Express (STK Push)</h3>
-                  <span className="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full uppercase">
-                    Recommended
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Get a payment prompt directly on your phone. Quick, easy, and automatic.
-                </p>
-                <div className="flex items-center gap-4 mt-2 text-xs text-green-600">
-                  <span>⚡ Instant</span>
-                  <span>🔒 Secure</span>
-                  <span>✨ Auto-confirm</span>
-                </div>
+                <h3 className="font-bold text-gray-900">M-Pesa Express (STK Push)</h3>
+                <p className="text-xs text-gray-500 mt-1">Automatic prompt on your phone</p>
               </div>
             </button>
 
-            {/* Manual Paybill */}
             <button
-              onClick={() => setFlow('manual')}
-              className="w-full flex items-start gap-4 p-5 rounded-2xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all duration-300 text-left group"
+              onClick={() => setStep('manual')}
+              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all text-left group"
             >
-              <div className="w-14 h-14 bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <FileText className="w-7 h-7 text-white" />
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <FileText className="w-6 h-6 text-gray-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-gray-900">Pay via Paybill</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Already paid? Enter your M-Pesa receipt number to confirm.
-                </p>
-                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                  <span>📋 Manual entry</span>
-                  <span>🧾 Receipt required</span>
-                </div>
+                <h3 className="font-semibold text-gray-900">Paybill Number</h3>
+                <p className="text-xs text-gray-500">Manual payment via Paybill</p>
               </div>
             </button>
-          </div>
-
-          {/* Security Note */}
-          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
-            <span className="text-lg">🔐</span>
-            <p className="text-xs text-blue-700">
-              All M-Pesa transactions are encrypted and processed securely through Safaricom's M-Pesa API.
-              Your PIN is never stored or transmitted by Kinoro  Chama.
-            </p>
           </div>
         </div>
       )}
 
-      {/* STK Push Flow */}
-      {(flow === 'stk_push' || flow === 'processing') && (
+      {step === 'stk' && (
         <MpesaSTKPush
-          amount={initialAmount || amount}
+          amount={amount}
           paymentType={paymentType}
           description={description}
-          loanId={loanId}
           lockedAmount={lockedAmount}
-          onBack={() => setFlow('select')}
-          onComplete={handlePaymentComplete}
-          isProcessing={flow === 'processing'}
-          setProcessing={(p) => setFlow(p ? 'processing' : 'stk_push')}
+          onBack={() => setStep('method')}
+          onComplete={handleComplete}
+          isProcessing={isProcessing}
+          setProcessing={setProcessing}
         />
       )}
 
-      {/* Manual Pay Flow */}
-      {flow === 'manual' && (
+      {step === 'manual' && (
         <MpesaManualPay
-          amount={initialAmount || amount}
+          amount={amount}
           paymentType={paymentType}
           description={description}
           lockedAmount={lockedAmount}
-          onBack={() => setFlow('select')}
-          onComplete={handlePaymentComplete}
+          onBack={() => setStep('method')}
+          onComplete={handleComplete}
         />
       )}
 
-      {/* Success / Failed */}
-      {(flow === 'success' || flow === 'failed') && result && (
+      {step === 'confirmation' && paymentResult && (
         <MpesaConfirmation
-          result={result}
+          result={paymentResult}
           onClose={handleClose}
-          onViewReceipt={() => setFlow('receipt')}
-          onRetry={() => setFlow('select')}
+          onViewReceipt={handleViewReceipt}
+          onRetry={handleRetry}
         />
       )}
 
-      {/* Receipt */}
-      {flow === 'receipt' && result && (
+      {step === 'receipt' && paymentResult && (
         <MpesaReceipt
-          result={result}
-          onClose={handleClose}
-          onBack={() => setFlow('success')}
+          result={paymentResult}
+          onClose={handleSuccess}
+          onBack={() => setStep('confirmation')}
         />
       )}
     </Modal>
