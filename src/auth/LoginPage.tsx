@@ -64,7 +64,7 @@ export default function LoginPage({ onSwitch, onForgotPassword, onRegisterAdmin 
       if (!success) {
         toast.error('Login Failed', 'Invalid email or password');
       } else {
-        toast.success('Login Successful', 'Welcome back to Mama Chama!');
+        toast.success('Login Successful', 'Welcome back to Kinoro  Chama!');
       }
     } catch (err) {
       toast.error('Login Error', 'Something went wrong. Please try again.');
@@ -76,12 +76,12 @@ export default function LoginPage({ onSwitch, onForgotPassword, onRegisterAdmin 
 
   return (
     <AuthLayout
-      heroTitle="Mama Chama"
-      heroSubtitle="Empowering women through collective savings, smart investments, and community support."
+      heroTitle="Kinoro  Chama"
+      heroSubtitle="Empowering community through collective savings, smart investments, and community support."
       heroEmoji="🤝"
       heroStats={[
         { value: '500+', label: 'Active Groups' },
-        { value: 'KES 50M+', label: 'Savings' },
+        { value: 'KES 50K+', label: 'Savings' },
         { value: '5,000+', label: 'Members' },
       ]}
     >

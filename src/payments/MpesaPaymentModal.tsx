@@ -155,7 +155,7 @@ export default function MpesaPaymentModal({
             <span className="text-lg">🔐</span>
             <p className="text-xs text-blue-700">
               All M-Pesa transactions are encrypted and processed securely through Safaricom's M-Pesa API.
-              Your PIN is never stored or transmitted by Mama Chama.
+              Your PIN is never stored or transmitted by Kinoro  Chama.
             </p>
           </div>
         </div>

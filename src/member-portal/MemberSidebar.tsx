@@ -29,7 +29,7 @@ export default function MemberSidebar() {
             <span className="text-xl">🤝</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Mama Chama</h1>
+            <h1 className="text-lg font-bold text-gray-900">Kinoro  Chama</h1>
             <p className="text-xs text-emerald-600 font-medium">Member Portal</p>
           </div>
         </div>

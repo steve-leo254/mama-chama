@@ -160,7 +160,7 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
       setRegistrationComplete(true);
       setShowPaymentModal(true);
       
-      toast.success('Registration Successful!', 'Welcome to Mama Chama! Your account has been created.');
+      toast.success('Registration Successful!', 'Welcome to Kinoro  Chama! Your account has been created.');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed. Please try again.';
       toast.error('Registration Failed', errorMessage);
@@ -170,7 +170,7 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
   };
 
   const handlePaymentSuccess = () => {
-    toast.success('Payment Complete!', 'Registration fee paid successfully. Welcome to Mama Chama!');
+    toast.success('Payment Complete!', 'Registration fee paid successfully. Welcome to Kinoro  Chama!');
     setShowPaymentModal(false);
     // Optionally redirect to dashboard or show welcome screen
   };
@@ -185,7 +185,7 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
 
   return (
     <AuthLayout
-      heroTitle="Join Mama Chama"
+      heroTitle="Join Kinoro  Chama"
       heroSubtitle="Start your journey towards financial freedom. Save together, grow together."
       heroEmoji="💪🏾"
       heroFeatures={[
@@ -477,7 +477,7 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
             <div className="bg-white rounded-xl border border-gray-200 p-4 max-h-48 overflow-y-auto">
               <h4 className="font-semibold text-gray-900 text-sm mb-2">Terms & Conditions (Summary)</h4>
               <div className="text-xs text-gray-600 space-y-2">
-                <p>By joining Mama Chama, you agree to:</p>
+                <p>By joining Kinoro  Chama, you agree to:</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
                   <li>Pay a one-time <strong>registration fee of KES 1,000</strong></li>
                   <li>Pay monthly contributions of <strong>KES 5,000</strong> by the 5th of each month</li>
@@ -521,7 +521,7 @@ export default function RegisterPage({ onSwitch, onViewTerms, initialStep = 1, i
                   I accept the Terms & Conditions
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  I have read and agree to the Mama Chama constitution, rules, and privacy policy
+                  I have read and agree to the Kinoro  Chama constitution, rules, and privacy policy
                 </p>
               </div>
             </label>

@@ -161,7 +161,7 @@ export default function TermsPage({ onBack }: TermsPageProps) {
             <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
               <span className="text-sm">🤝</span>
             </div>
-            <span className="font-bold text-gray-900 hidden sm:block">Mama Chama</span>
+            <span className="font-bold text-gray-900 hidden sm:block">Kinoro  Chama</span>
           </div>
         </div>
       </header>
@@ -174,7 +174,7 @@ export default function TermsPage({ onBack }: TermsPageProps) {
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Terms & Conditions</h1>
           <p className="text-white/80 text-lg max-w-2xl mx-auto">
-            Mama Chama Constitution & Bylaws
+            Kinoro  Chama Constitution & Bylaws
           </p>
           <div className="flex items-center justify-center gap-4 mt-6 text-sm text-white/60">
             <span>📅 Effective: January 2024</span>
@@ -190,9 +190,9 @@ export default function TermsPage({ onBack }: TermsPageProps) {
         <div className="card mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">📜 Preamble</h2>
           <p className="text-gray-600 leading-relaxed">
-            We, the members of <strong>Mama Chama</strong>, a women's savings and investment group,
+            We, the members of <strong>Kinoro  Chama</strong>, a women's savings and investment group,
             hereby establish this constitution to govern our collective activities. This document
-            outlines the rules, responsibilities, and rights of all members. By joining Mama Chama,
+            outlines the rules, responsibilities, and rights of all members. By joining Kinoro  Chama,
             you agree to abide by all the terms and conditions stated herein.
           </p>
           <div className="mt-4 p-4 bg-primary-50 rounded-xl border border-primary-100">
@@ -274,7 +274,7 @@ export default function TermsPage({ onBack }: TermsPageProps) {
         <div className="card mt-8 bg-gradient-to-r from-primary-50 to-purple-50 border-primary-200">
           <h2 className="text-lg font-bold text-gray-900 mb-3">✍️ Declaration</h2>
           <p className="text-sm text-gray-600 leading-relaxed mb-4">
-            This constitution was adopted by the members of Mama Chama during the Annual General Meeting
+            This constitution was adopted by the members of Kinoro  Chama during the Annual General Meeting
             held on <strong>January 13, 2024</strong>. All current and future members are bound by these
             terms and conditions upon joining the group.
           </p>

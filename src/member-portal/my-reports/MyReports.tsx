@@ -277,7 +277,7 @@ export default function MyReports() {
         doc.setTextColor(150, 150, 150);
         doc.setFont('helvetica', 'italic');
         doc.text(
-          'Proudly brought to you by Mama Chama Savings and Credit Cooperative Society',
+          'Proudly brought to you by Kinoro  Chama Savings and Credit Cooperative Society',
           pageWidth / 2,
           footerY,
           { align: 'center' }

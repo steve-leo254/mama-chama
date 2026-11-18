@@ -9,7 +9,7 @@ export default function Settings() {
   const {} = useApp();
   const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState({
-    chama_name: 'Mama Chama',
+    chama_name: 'Kinoro  Chama',
     description: "A women's savings and investment group focused on financial empowerment",
     monthly_contribution: 5000,
     late_penalty: 500,

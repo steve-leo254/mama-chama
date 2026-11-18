@@ -116,7 +116,7 @@ export default function ResetPasswordPage({ onBack, onSuccess }: ResetPasswordPa
             <h4 className="text-sm font-semibold text-emerald-800 mb-1">🛡️ Security Tips</h4>
             <ul className="text-xs text-emerald-700 space-y-1">
               <li>• Don't share your password with anyone</li>
-              <li>• Use a unique password for Mama Chama</li>
+              <li>• Use a unique password for Kinoro  Chama</li>
               <li>• Change your password regularly</li>
             </ul>
           </div>

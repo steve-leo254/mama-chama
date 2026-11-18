@@ -323,7 +323,7 @@ export default function GroupReports() {
           
           <div class="footer">
             <p>This is a computer-generated report and requires no signature.</p>
-            <p>Mama Chama Group Management System</p>
+            <p>Kinoro  Chama Group Management System</p>
           </div>
         </body>
       </html>

@@ -24,7 +24,7 @@ export default function Header() {
           <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
             <span className="text-sm">🤝</span>
           </div>
-          <h1 className="text-lg font-bold text-gray-900">Mama Chama</h1>
+          <h1 className="text-lg font-bold text-gray-900">Kinoro  Chama</h1>
         </div>
 
         {/* Search */}

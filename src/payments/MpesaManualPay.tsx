@@ -209,7 +209,7 @@ export default function MpesaManualPay({
               <p className="text-xs text-gray-500 mb-2">📩 Your SMS looks like this:</p>
               <div className="bg-white rounded-lg p-3 border border-gray-100 text-xs text-gray-600 font-mono leading-relaxed">
                 <span className="font-bold text-green-600">{receipt || 'QK1234567R'}</span> Confirmed.
-                Ksh{amount.toLocaleString()}.00 sent to Mama Chama for account {ACCOUNT}
+                Ksh{amount.toLocaleString()}.00 sent to Kinoro  Chama for account {ACCOUNT}
                 on {new Date().toLocaleDateString('en-GB')} at {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.
                 New M-PESA balance is Ksh***
               </div>

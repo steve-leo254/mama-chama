@@ -473,7 +473,7 @@ const DepositManagement: React.FC = () => {
           ${tableContent}
 
           <div class="footer">
-            <p>Mama Chama Transaction Management System - Confidential Report</p>
+            <p>Kinoro  Chama Transaction Management System - Confidential Report</p>
             <p>Total Records: ${filteredTransactions.length}</p>
           </div>
         </body>

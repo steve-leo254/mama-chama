@@ -105,7 +105,7 @@ export default function RegisterAdminPage({ onBack }: RegisterAdminPageProps) {
   return (
     <AuthLayout
       heroTitle="Admin Registration"
-      heroSubtitle="Create a new administrator account for Mama Chama management system."
+      heroSubtitle="Create a new administrator account for Kinoro  Chama management system."
       heroEmoji="👨‍💼"
       heroFeatures={[
         'Full system administration access',
@@ -241,7 +241,7 @@ export default function RegisterAdminPage({ onBack }: RegisterAdminPageProps) {
             <div>
               <h4 className="font-semibold text-amber-900 text-sm">Administrator Privileges</h4>
               <p className="text-xs text-amber-700 mt-1">
-                This account will have full administrative access to the Mama Chama system, including member management, 
+                This account will have full administrative access to the Kinoro  Chama system, including member management, 
                 financial oversight, and system configuration. Please ensure this information is accurate.
               </p>
             </div>
